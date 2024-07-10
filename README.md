@@ -1,8 +1,36 @@
+# Example simulations using [WaterLily.jl](https://github.com/WaterLily-jl/WaterLily.jl)
+
+This repository contains example simulations using the [WaterLily.jl](https://github.com/WaterLily-jl/WaterLily.jl) package.
+
+<!-- 
 ## Examples
 
-The user can set the boundary conditions, the initial velocity field, the fluid viscosity (which determines the [Reynolds number](https://en.wikipedia.org/wiki/Reynolds_number)), and immerse solid obstacles using a signed distance function. These examples and others are found in the [examples](examples).
+The user can set the boundary conditions, the initial velocity field, the fluid viscosity (which determines the [Reynolds number](https://en.wikipedia.org/wiki/Reynolds_number)), and immerse solid obstacles using a signed distance function. These examples and others are found in the [examples](examples). -->
 
-### Flow over a circle
+
+### List examples
+#### 2D
+- [2D flow around a circle](examples/TwoD_Circle.jl)
+- [2D flow around a circle with periodic boundary conditions](examples/TwoD_CirclePeriodicBC.jl)
+- [2D flow around a circle in 1DOF vortex-induced-vibration](examples/TwoD_CircleVIV.jl)
+- [2D flow around a flapping plate](examples/TwoD_Hover.jl)
+- [2D flow around the Julia logo](examples/TwoD_Julia.jl)
+- [2D Lid-driven cavity flow (show how to overwrite BC! function)](examples/TwoD_LidCavity.jl)
+- [2D flow around multiple cylinders using the AutoBodies](examples/TwoD_MultipleBodies.jl)
+- [2D flow around a circle with oscillating body force](examples/TwoD_OscillatingFlowOverCircle.jl)
+- [2D flow around circle in an accelerating frame of reference using time-dependent boundary conditions](examples/TwoD_SlowStartCircle.jl)
+- [2D flow around a square using AutoBodies set operations](examples/TwoD_Square.jl)
+- [2D Tandem airfoil motion optimisation using AutoDiff](examples/TwoD_TandemFoilOptim.jl)
+- [2D flow around a triangle with a custom sdf](examples/TwoD_Triangle.jl)
+- [2D flow around a circle fully in the terminal](examples/TwoD_UnicodePlots.jl)
+#### 3D
+- [3D Taylor-Green vortex break down](examples/ThreeD_TaylorGreenVortex.jl)
+- [3D donut flow, using the GPU and Makie for live rendering](examples/ThreeD_Donut.jl)
+- [3D jellyfish, using the GPU and Makie for live rendering](examples/ThreeD_Jelly.jl)
+- [3D cylinder flow with vtk file save ad restart](examples/ThreeD_CylinderVTKRestart.jl)
+
+
+### [Flow over a circle](examples/TwoD_Circle.jl)
 We define the size of the simulation domain as `n`x`m` cells. The circle has radius `m/8` and is centered at `(m/2,m/2)`. The flow boundary conditions are `(U=1,0)` and Reynolds number is `Re=U*radius/ν` where `ν` (Greek "nu" U+03BD, not Latin lowercase "v") is the kinematic viscosity of the fluid.
 ```julia
 using WaterLily
@@ -12,7 +40,7 @@ function circle(n,m;Re=250,U=1)
     Simulation((n,m), (U,0), radius; ν=U*radius/Re, body)
 end
 ```
-The second to last line defines the circle geometry using a [signed distance function](https://en.wikipedia.org/wiki/Signed_distance_function#Applications). The `AutoBody` function uses [automatic differentiation](https://github.com/JuliaDiff/) to infer the other geometric parameter automatically. Replace the circle's distance function with any other, and now you have the flow around something else... such as a [donut](examples/ThreeD_donut.jl) or the [Julia logo](examples/TwoD_Julia.jl). Finally, the last line defines the `Simulation` by passing in parameters we've defined.
+The second to last line defines the circle geometry using a [signed distance function](https://en.wikipedia.org/wiki/Signed_distance_function#Applications). The `AutoBody` function uses [automatic differentiation](https://github.com/JuliaDiff/) to infer the other geometric parameter automatically. Replace the circle's distance function with any other, and now you have the flow around something else... such as a [donut](examples/ThreeD_Donut.jl) or the [Julia logo](examples/TwoD_Julia.jl). Finally, the last line defines the `Simulation` by passing in parameters we've defined.
 
 Now we can create a simulation (first line) and run it forward in time (third line)
 ```julia
@@ -25,9 +53,9 @@ Note we've set `n,m` to be multiples of powers of 2, which is important when usi
 using Plots
 contour(circ.flow.p')
 ```
-A set of [flow metric functions](src/Metrics.jl) have been implemented and the examples use these to make gifs such as the one above.
+A set of [flow metric functions](https://github.com/WaterLily-jl/WaterLily.jl/tree/master/src/Metrics.jl) have been implemented and the examples use these to make gifs such as the one above.
 
-### 3D Taylor Green Vortex
+### [3D Taylor Green Vortex](examples/ThreeD_TaylorGreenVortex.jl)
 The three-dimensional [Taylor Green Vortex](examples/ThreeD_TaylorGreenVortex.jl) demonstrates many of the other available simulation options. First, you can simulate a nontrivial initial velocity field by passing in a vector function `uλ(i,xyz)` where `i ∈ (1,2,3)` indicates the velocity component `uᵢ` and `xyz=[x,y,z]` is the position vector.
 ```julia
 function TGV(; pow=6, Re=1e5, T=Float64, mem=Array)
@@ -46,14 +74,13 @@ end
 ```
 This example also demonstrates the floating point type (`T=Float64`) and array memory type (`mem=Array`) options. For example, to run on an NVIDIA GPU we only need to import the [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) library and initialize the `Simulation` memory on that device.
 ```julia
-import CUDA
-@assert CUDA.functional()
-vortex = TGV(T=Float32,mem=CUDA.CuArray)
+using CUDA
+vortex = TGV(T=Float32,mem=CuArray)
 sim_step!(vortex,1)
 ```
 For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`. Note that Julia 1.9 is required for AMD GPUs.
 
-### Moving bodies
+### [Moving bodies](examples/TwoD_Hover.jl)
 ![Flapping line segment flow](examples/hover.gif)
 
 You can simulate moving bodies in WaterLily by passing a coordinate `map` to `AutoBody` in addition to the `sdf`.
@@ -77,10 +104,10 @@ In this example, the `sdf` function defines a line segment from `-L/2 ≤ x[2] �
 
 One important thing to note here is the use of `StaticArrays` to define the `sdf` and `map`. This speeds up the simulation since it eliminates allocations at every grid cell and time step.
 
-### [Circle inside an oscillating flow](https://github.com/WaterLily-jl/Tutorials/blob/master/examples/TwoD_oscillatingFlowOverCircle.jl)
+### [Circle inside an oscillating flow](https://github.com/WaterLily-jl/Tutorials/blob/master/examples/TwoD_OscillatingFlowOverCircle.jl)
 ![Oscillating flow](examples/oscillating.gif)
 
-This [example](examples/TwoD_oscillatingFlowOverCircle.jl) demonstrates a 2D oscillating periodic flow over a circle.
+This [example](examples/TwoD_OscillatingFlowOverCircle.jl) demonstrates a 2D oscillating periodic flow over a circle.
 ```julia
 function circle(n,m;Re=250,U=1)
     # define a circle at the domain center
@@ -112,7 +139,7 @@ sim = Simulation((256,256), Ut, 32)
 The `Ut` function is used to define the time-varying velocity field. In this example, the velocity in the "x" direction is set to `a0*t` where `a0` is the acceleration of the reference frame. The `Simulation` function is then called with the `Ut` function as the second argument. The simulation will then run with the time-varying velocity field.
 
 
-### [Periodic and convective boundary conditions](https://github.com/WaterLily-jl/Tutorials/blob/master/examples/TwoD_circle_periodicBC_convectiveBC.jl)
+### [Periodic and convective boundary conditions](https://github.com/WaterLily-jl/Tutorials/blob/master/examples/TwoD_CirclePeriodicBC.jl)
 
 ![periodic cylinder](examples/periodic.gif)
 
