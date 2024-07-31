@@ -255,7 +255,7 @@ close(writer)
 ```
 Internally, this function reads the last file in the `.pvd` file and use that to set the `velocity` and `pressure` fields in the simulation. The `sim_time` is also set to the last value saved in the `.pvd` file. The function also returns a `vtkwriter` that will append the new data to the file used to restart the simulation. __Note__ that the simulation object `sim` that will be filled must be identical to the one saved to the file for this restart to work, that is, the same size, same body, etc.
 
-#### Overwritting default functions
+#### Overwriting default functions
 
 Sometime, it might be usefull to overwrite the default functions used in the simulation. For example, the `BC!` function can be overwritten to implement a custom boundary condition, see [this example](examples/TwoD_LidCavity.jl). For example to overwrite the `mom_step!` function you will need something like this
 ```julia
