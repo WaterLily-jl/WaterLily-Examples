@@ -1,14 +1,26 @@
 # Example simulations using [WaterLily.jl](https://github.com/WaterLily-jl/WaterLily.jl)
 
-This repository contains example simulations using the [WaterLily.jl](https://github.com/WaterLily-jl/WaterLily.jl) package.
+This repository contains example simulations using the [WaterLily.jl](https://github.com/WaterLily-jl/WaterLily.jl) package. Some tutorials are presented as [`Pluto.jl`](https://plutojl.org/) notebooks and the rest are Julia scripts. The examples are divided into 2D and 3D simulations and are listed below. The examples are intended to demonstrate the capabilities of the `WaterLily.jl` package and to provide a starting point for users to create their own simulations. 
 
-<!-- 
-## Examples
+### Youtube tutorials
 
-The user can set the boundary conditions, the initial velocity field, the fluid viscosity (which determines the [Reynolds number](https://en.wikipedia.org/wiki/Reynolds_number)), and immerse solid obstacles using a signed distance function. These examples and others are found in the [examples](examples). -->
+An excellent initial tutorial on how to use WaterLily is available on youtube, it will help you go through the basics of the package and how to set up a simple simulation
 
+[![Weymouth youtube link](assets/WaterLily_tutorials.png)](https://youtu.be/OO0Nz3uWDc8?si=cdQKsh2zQTsgYj75)
+
+<!-- [![ParametricBodies youtube link](assets/ParametricBodies_tutorials.png)](https://www.youtube.com/watch?v=6PmJJKVOfvc&list=PLQO9vKCRROdYEI218QIUICwv8IAAbOuCq&index=1) -->
+
+### Pluto notebooks
+
+Two example notebooks are available to help you get started with WaterLily, they are available in the `notebooks` folder, have a look [here](https://plutojl.org/#try) if you don't know how to use Pluto.
+
+[![Pluto notebook link](assets/Pluto_shark.png)](notebooks/Shark.jl)
+![shark](assets/shark.gif)
 
 ### List examples
+
+Below we provide a list of all the examples available
+
 #### 2D
 - [2D flow around a circle](examples/TwoD_Circle.jl)
 - [2D flow around a circle with periodic boundary conditions](examples/TwoD_CirclePeriodicBC.jl)
@@ -23,13 +35,16 @@ The user can set the boundary conditions, the initial velocity field, the fluid 
 - [2D Tandem airfoil motion optimisation using AutoDiff](examples/TwoD_TandemFoilOptim.jl)
 - [2D flow around a triangle with a custom sdf](examples/TwoD_Triangle.jl)
 - [2D flow around a circle fully in the terminal](examples/TwoD_UnicodePlots.jl)
+- [2D channel flow with periodic BCs](examples/TwoD_Channel.jl)
 #### 3D
 - [3D Taylor-Green vortex break down](examples/ThreeD_TaylorGreenVortex.jl)
 - [3D donut flow, using the GPU and Makie for live rendering](examples/ThreeD_Donut.jl)
 - [3D jellyfish, using the GPU and Makie for live rendering](examples/ThreeD_Jelly.jl)
 - [3D cylinder flow with vtk file save ad restart](examples/ThreeD_CylinderVTKRestart.jl)
 
-### Flow over a circle
+### Detailed examples
+
+#### Flow over a circle
 We define the size of the simulation domain as `n`$\times$`m` cells. The circle has radius `m/8` and is centered at `(m/2,m/2)`. The flow boundary conditions are `(U,0)`, where we set `U=1`, and the Reynolds number is `Re=U*radius/ν` where `ν` (Greek "nu" U+03BD, not Latin lowercase "v") is the kinematic viscosity of the fluid.
 ```julia
 using WaterLily
@@ -54,7 +69,7 @@ contour(circ.flow.p')
 ```
 A set of [flow metric functions](https://github.com/WaterLily-jl/WaterLily.jl/blob/master/src/Metrics.jl) have been implemented and the examples use these to make gifs such as the one above.
 
-### 3D Taylor Green Vortex
+#### 3D Taylor Green Vortex
 The three-dimensional [Taylor Green Vortex](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/ThreeD_TaylorGreenVortex.jl) demonstrates many of the other available simulation options. First, you can simulate a non-trivial initial velocity field by passing in a vector function `uλ(i,xyz)` where `i ∈ (1,2,3)` indicates the velocity component `uᵢ` and `xyz=[x,y,z]` is the position vector.
 ```julia
 function TGV(; pow=6, Re=1e5, T=Float64, mem=Array)
@@ -80,9 +95,9 @@ sim_step!(vortex,1)
 ```
 For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`. Note that Julia 1.9 is required for AMD GPUs.
 
-### Moving bodies
+#### Moving bodies
 
-![Flapping line segment flow](examples/hover.gif)
+![Flapping line segment flow](assets/hover.gif)
 
 You can simulate moving bodies in WaterLily by passing a coordinate `map` to `AutoBody` in addition to the `sdf`.
 ```julia
@@ -105,9 +120,9 @@ end
 
 One important thing to note here is the use of `StaticArrays` to define the `sdf` and `map`. This speeds up the simulation since it eliminates allocations at every grid cell and time step.
 
-### Circle inside an oscillating flow
+#### Circle inside an oscillating flow
 
-![Oscillating flow](examples/oscillating.gif)
+![Oscillating flow](assets/oscillating.gif)
 
 This [example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_OscillatingFlowOverCircle.jl) demonstrates a 2D oscillating periodic flow over a circle.
 ```julia
@@ -126,7 +141,7 @@ The `g` argument accepts a function with direction (`i`) and time (`t`) argument
 
 The `perdir` argument is a tuple that specifies the directions to which periodic boundary conditions should be applied. Any number of directions may be defined as periodic, but in this example only the `i=1` direction is used allowing the flow to accelerate freely in this direction.
 
-### Accelerating reference frame
+#### Accelerating reference frame
 
 WaterLily gives the possibility to set up a `Simulation` using time-varying boundary conditions for the velocity field, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_SlowStartCircle.jl). This can be used to simulate a flow in an accelerating reference frame. The following example demonstrates how to set up a `Simulation` with a time-varying velocity field.
 ```julia
@@ -139,7 +154,7 @@ sim = Simulation((256,256), Ut, 32)
 The `Ut` function is used to define the time-varying velocity field. In this example, the velocity in the "x" direction is set to `a0*t` where `a0` is the acceleration of the reference frame. The `Simulation` function is then called with the `Ut` function as the second argument. The simulation will then run with the time-varying velocity field.
 
 
-### Periodic and convective boundary conditions
+#### Periodic and convective boundary conditions
 
 In addition to the standard free-slip (or reflective) boundary conditions, WaterLily also supports periodic boundary conditions, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_circle_periodicBC_convectiveBC.jl). For instance, to set up a `Simulation` with periodic boundary conditions in the "y" direction the `perdir=(2,)` keyword argument should be passed
 ```julia
@@ -172,7 +187,7 @@ body = AutoBody(sdf, map)
 Simulation((512,384), u_BC=(1,0), L=32; body, exitBC=true)
 ```
 
-### Writing to a VTK file
+#### Writing to a VTK file
 
 The following [example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/ThreeD_CylinderVTKRestart.jl) demonstrates how to write simulation data to a `.pvd` file using the `WriteVTK` package and the WaterLily `vtkwriter` function. The simplest writer can be instantiated with
 
@@ -223,7 +238,7 @@ custom_vtk_function(a::Simulation) = ... |> Array
 ```
 where `...` should be replaced with the code that generates the field you want to write to the file. The piping to a (CPU) `Array` is necessary to ensure that the data is written to the CPU before being written to the file for GPU simulations.
 
-### Restarting from a VTK file
+#### Restarting from a VTK file
 
 The restart of a simulation from a VTK file is demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/ThreeD_CylinderVTKRestart.jl). The `ReadVTK` package is used to read simulation data from a `.pvd` file. This `.pvd` __must__ have been written with the `vtkwriter` function and __must__ contain at least the `velocity` and `pressure` fields. The following example demonstrates how to restart a simulation from a `.pvd` file using the `ReadVTK` package and the WaterLily `vtkreader` function
 ```julia
@@ -240,10 +255,23 @@ close(writer)
 ```
 Internally, this function reads the last file in the `.pvd` file and use that to set the `velocity` and `pressure` fields in the simulation. The `sim_time` is also set to the last value saved in the `.pvd` file. The function also returns a `vtkwriter` that will append the new data to the file used to restart the simulation. __Note__ that the simulation object `sim` that will be filled must be identical to the one saved to the file for this restart to work, that is, the same size, same body, etc.
 
+#### Overwritting default functions
+
+Sometime, it might be usefull to overwrite the default functions used in the simulation. For example, the `BC!` function can be overwritten to implement a custom boundary condition, see [this example](examples/TwoD_LidCavity.jl). For example to overwrite the `mom_step!` function you will need something like this
+```julia
+function WaterLily.mom_step!(a::Flow{N},b::AbstractPoisson) where N
+    ...do your thing...
+end
+```
+in your main script. This means that internally, when EaterLily call `mom_step!` it will call this ew function and not the one in `src/Flow.jl`. This can be used to implement custom boundary conditions, custom body forces, etc.
+
+> **_NOTE:_**  In WaterLily we use a [staggered grid](https://tum-pbs.github.io/PhiFlow/Staggered_Grids.html), this means that the velocity component and the pressure are not at the same physical location in the finite-volume mesh, see figure below. You have to be careful if you play with the `BC!` function to make sure that you are applying the boundary condition to the correct physical location.
+
+![Staggered grid](assets/Waterlily_grid.png)
 
 ### Citing
 
-If you have used `WaterLily` for research, please __cite us__! The following manuscript describes the main features of the solver and provides benchmarking, validation, and profiling results.
+If you have used `WaterLily.jl` for research, please __cite us__! The following manuscript describes the main features of the solver and provides benchmarking, validation, and profiling results.
 ```
 @misc{WeymouthFont2024,
     title         = {WaterLily.jl: A differentiable and backend-agnostic Julia solver to simulate incompressible viscous flow and dynamic bodies},
@@ -255,3 +283,7 @@ If you have used `WaterLily` for research, please __cite us__! The following man
     primaryClass  = {physics.flu-dyn}
 }
 ```
+
+### Contributing
+
+We are always looking for new examples to showcase the capabilities of `WaterLily.jl`. If you came up with amazing examples and you want to share them, please open a pull request with the new exmaple either as a `Pluto.jl` notebook or a classic script. We will be happy to review it and merge it into the repository.
