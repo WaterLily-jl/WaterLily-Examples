@@ -1,5 +1,6 @@
 using WaterLily
 using StaticArrays
+include("../src/ThreeD_plots.jl")
 function jelly(p=5;Re=5e2,mem=Array,U=1)
     # Define simulation size, geometry dimensions, & viscosity
     n = 2^p; R = 2n/3; h = 4n-2R; ν = U*R/Re
@@ -20,22 +21,6 @@ function jelly(p=5;Re=5e2,mem=Array,U=1)
     Simulation((n,n,4n),(0,0,-U),R;ν,body,mem,T=Float32)
 end
 
-using Meshing, GeometryBasics
-function geom!(md,d,sim,t=WaterLily.time(sim))
-    a = sim.flow.σ
-    WaterLily.measure_sdf!(a,sim.body,t)
-    copyto!(d,a[inside(a)]) # copy to CPU
-    mirrorto!(md,d)         # mirror quadrant
-    normal_mesh(GeometryBasics.Mesh(md,Meshing.MarchingCubes(),origin=Vec(0,0,0),widths=size(md)))
-end
-
-function ω!(md,d,sim)
-    a,dt = sim.flow.σ,sim.L/sim.U
-    @inside a[I] = WaterLily.ω_mag(I,sim.flow.u)*dt
-    copyto!(d,a[inside(a)]) # copy to CPU
-    mirrorto!(md,d)         # mirror quadrant
-end
-
 function mirrorto!(a,b)
     n = size(b,1)
     a[reverse(1:n),reverse(1:n),:].=b
@@ -43,7 +28,6 @@ function mirrorto!(a,b)
     a[:,reverse(n+1:2n),:].=a[:,1:n,:]
     return a
 end
-using GLMakie
 Makie.inline!(false)
 # using CUDA
 # CUDA.allowscalar(false)

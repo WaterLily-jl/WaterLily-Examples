@@ -267,7 +267,7 @@ in your main script. This means that internally, when EaterLily call `mom_step!`
 
 > **_NOTE:_**  In WaterLily we use a [staggered grid](https://tum-pbs.github.io/PhiFlow/Staggered_Grids.html), this means that the velocity component and the pressure are not at the same physical location in the finite-volume mesh, see figure below. You have to be careful if you play with the `BC!` function to make sure that you are applying the boundary condition to the correct physical location.
 
-![Staggered grid](assets/Waterlily_grid.png)
+![Staggered grid](assets/WaterLily_grid.svg)
 
 ### Citing
 

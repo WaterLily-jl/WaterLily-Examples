@@ -16,12 +16,6 @@ function makie_video!(makie_plot,sim,dat,obs_update!;remeasure=false,name="file.
     return f
 end
 
-using Meshing, GeometryBasics
-function body_mesh(sim,t=0)
-    a = sim.flow.σ; R = inside(a)
-    WaterLily.measure_sdf!(a,sim.body,t)
-    normal_mesh(GeometryBasics.Mesh(a[R]|>Array,MarchingCubes(),origin=Vec(0,0,0),widths=size(R)))
-end;
 function flow_λ₂!(dat,sim)
     a = sim.flow.σ
     @inside a[I] = max(0,log10(-min(-1e-6,WaterLily.λ₂(I,sim.flow.u)*(sim.L/sim.U)^2))+.25)
@@ -31,4 +25,25 @@ function flow_λ₂(sim)
     dat = sim.flow.σ[inside(sim.flow.σ)] |> Array
     flow_λ₂!(dat,sim)
     dat
+end
+
+using Meshing
+function geom!(md,d,sim,t=WaterLily.time(sim))
+    a = sim.flow.σ
+    WaterLily.measure_sdf!(a,sim.body,t)
+    copyto!(d,a[inside(a)]) # copy to CPU
+    mirrorto!(md,d)         # mirror quadrant
+    alg = Meshing.MarchingCubes()
+    ranges = range.((0, 0, 0), size(md))
+    points, faces = Meshing.isosurface(md, alg, ranges...)
+    p3f = Point3f.(points)
+    gltriangles = GLMakie.GLTriangleFace.(faces)
+    return GLMakie.normal_mesh(p3f, gltriangles)
+end
+
+function ω!(md,d,sim)
+    a,dt = sim.flow.σ,sim.L/sim.U
+    @inside a[I] = WaterLily.ω_mag(I,sim.flow.u)*dt
+    copyto!(d,a[inside(a)]) # copy to CPU
+    mirrorto!(md,d)         # mirror quadrant
 end
