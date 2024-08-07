@@ -36,6 +36,7 @@ Below we provide a list of all the examples available
 - [2D flow around a triangle with a custom sdf](examples/TwoD_Triangle.jl)
 - [2D flow around a circle fully in the terminal](examples/TwoD_UnicodePlots.jl)
 - [2D channel flow with periodic BCs](examples/TwoD_Channel.jl)
+- [2D flow around 2 cylinders using the AutoBodiy and ParametricBody](examples/TwoD_MultipleAbstractBodies.jl)
 #### 3D
 - [3D Taylor-Green vortex break down](examples/ThreeD_TaylorGreenVortex.jl)
 - [3D donut flow, using the GPU and Makie for live rendering](examples/ThreeD_Donut.jl)
