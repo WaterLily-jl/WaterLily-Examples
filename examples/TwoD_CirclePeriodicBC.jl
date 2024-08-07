@@ -37,6 +37,8 @@ tstep = 0.1
 
     # print time step
     @inside sim.flow.σ[I] = WaterLily.curl(3,I,sim.flow.u)*sim.L/sim.U
-    flood(sim.flow.σ,clims=(-10,10),shift=(-0.5,-0.5)); body_plot!(sim)
+    @inside sim.flow.σ[I] = ifelse(abs(sim.flow.σ[I])<0.001 || sdf(sim.body,loc(0,I),WaterLily.time(sim))≤0,0.0,sim.flow.σ[I])
+    flood(sim.flow.σ,clims=(-10,10),shift=(-2,-1.5),axis=([], false),
+          cfill=:seismic,legend=false,border=:none); body_plot!(sim)
     println("tU/L=",round(tᵢ,digits=4),", Δt=",round(sim.flow.Δt[end],digits=3))
 end

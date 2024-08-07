@@ -93,7 +93,8 @@ import CUDA
 vortex = TGV(T=Float32,mem=CUDA.CuArray)
 sim_step!(vortex,1)
 ```
-For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`. Note that Julia 1.9 is required for AMD GPUs.
+For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`. 
+> **_NOTE:_** Julia 1.9 is required for AMD GPUs.
 
 #### Moving bodies
 
@@ -143,6 +144,8 @@ The `perdir` argument is a tuple that specifies the directions to which periodic
 
 #### Accelerating reference frame
 
+![Accelerating flow](assets/accelerating.gif)
+
 WaterLily gives the possibility to set up a `Simulation` using time-varying boundary conditions for the velocity field, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_SlowStartCircle.jl). This can be used to simulate a flow in an accelerating reference frame. The following example demonstrates how to set up a `Simulation` with a time-varying velocity field.
 ```julia
 using WaterLily
@@ -155,6 +158,9 @@ The `Ut` function is used to define the time-varying velocity field. In this exa
 
 
 #### Periodic and convective boundary conditions
+
+![periodic flow](assets/periodic.gif)
+
 
 In addition to the standard free-slip (or reflective) boundary conditions, WaterLily also supports periodic boundary conditions, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_circle_periodicBC_convectiveBC.jl). For instance, to set up a `Simulation` with periodic boundary conditions in the "y" direction the `perdir=(2,)` keyword argument should be passed
 ```julia
@@ -186,6 +192,41 @@ body = AutoBody(sdf, map)
 # y-periodic boundary conditions
 Simulation((512,384), u_BC=(1,0), L=32; body, exitBC=true)
 ```
+
+#### Multiple bodies
+
+![Multiple bodies](assets/MultipleBodies.gif)
+
+You can also use [boolean operations](https://en.wikipedia.org/wiki/Boolean_algebra#Boolean_operations) to combine `AbstractBody` together, as demonstrated in [this example](https://https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TTwoD_MultipleBodies.jl). In this exmample we randomly place 6 circles in the domain and use the `AutoBodies` package to combine them together.
+```julia
+bodies = AbstractBody[]
+# random position x,y ∈ [-2.5,2.5] and circle diamater r ∈ [0.75,1.5]
+for (c,r) ∈ zip(eachrow(5rand(6,2).-2.5),0.75rand(6).+0.75)
+    push!(bodies,AutoBody((x,t)->√sum(abs2, x.-x0.-2c.*R) - r*R))
+end
+# combine into one body
+body = Bodies(bodies, repeat([+],length(bodies)-1))
+```
+As this method work for any `AbstractBody`, it will also work for body generated using the sister package [ParametricBodies.jl](https://github.com/WaterLily-jl/ParametricBodies.jl).
+```julia
+bodies = AbstractBody[]
+# a first circle using autoBody 
+push!(bodies,AutoBody((x,t)->√sum(abs2, x .- SA_F32[3.75L,2.5L]) - L/2))
+# another one from parametricbodies
+cps = SA_F32[1 1 0 -1 -1 -1  0  1 1
+             0 1 1  1  0 -1 -1 -1 0]*L/2 .+ [2L,1.5L]
+weights = SA_F32[1.,√2/2,1.,√2/2,1.,√2/2,1.,√2/2,1.]
+knots =   SA_F32[0,0,0,1/4,1/4,1/2,1/2,3/4,3/4,1,1,1]
+# make a nurbs curve and a body for the simulation
+push!(bodies,ParametricBody(NurbsCurve(cps,knots,weights)))
+# combine into one body
+body = Bodies(bodies, [+])
+```
+Which wil give you the flow around two circles, one defined using `AutoBody` and the other using `ParametricBody`.
+
+![Multiple AbstractBody](assets/MultipleAbstractBodies.gif)
+
+> **_NOTE:_** Type dispatch allows you to call the `pressure_force` and `viscous_force` functions on any `AbstractBody` object and the correct method will be called, although the method behind are different.
 
 #### Writing to a VTK file
 
@@ -253,7 +294,8 @@ write!(writer, sim)
 # don't forget to close the file
 close(writer)
 ```
-Internally, this function reads the last file in the `.pvd` file and use that to set the `velocity` and `pressure` fields in the simulation. The `sim_time` is also set to the last value saved in the `.pvd` file. The function also returns a `vtkwriter` that will append the new data to the file used to restart the simulation. __Note__ that the simulation object `sim` that will be filled must be identical to the one saved to the file for this restart to work, that is, the same size, same body, etc.
+Internally, this function reads the last file in the `.pvd` file and use that to set the `velocity` and `pressure` fields in the simulation. The `sim_time` is also set to the last value saved in the `.pvd` file. The function also returns a `vtkwriter` that will append the new data to the file used to restart the simulation. 
+> **_NOTE:_** The simulation object `sim` that will be filled must be identical to the one saved to the file for this restart to work, that is, the same size, same body, etc.
 
 #### Overwriting default functions
 

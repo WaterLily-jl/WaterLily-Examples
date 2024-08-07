@@ -4,7 +4,7 @@ include("../src/TwoD_plots.jl")
 
 function circle(n,m;Re=550,U=1,mem=Array,T=Float32)
     R, x0 = m/18, m/2+1
-    bodies = AutoBody[]
+    bodies = AbstractBody[]
     # random position x,y ∈ [-2.5,2.5] and circle diamater r ∈ [0.75,1.5]
     for (center,radius) ∈ zip(eachrow(5rand(6,2).-2.5),0.75rand(6).+0.75)
         push!(bodies,AutoBody((x,t)->√sum(abs2, x .- x0 .- 2center.*R) - radius*R))
@@ -17,7 +17,8 @@ end
 
 # make a simulation and run it
 sim = circle(3*2^7,2^8,mem=Array)
-sim_gif!(sim,duration=10,clims=(-5,5),plotbody=true)
+sim_gif!(sim,duration=30,clims=(-5,5),plotbody=true,axis=([], false),
+         cfill=:seismic,legend=false,border=:none)
 
 # get force on first body
 f1 = WaterLily.pressure_force(sim.flow,sim.body.bodies[1])
