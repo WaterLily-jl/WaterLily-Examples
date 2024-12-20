@@ -22,7 +22,7 @@ Two example notebooks are available to help you get started with WaterLily, they
 Below we provide a list of all the examples available
 
 #### 2D
-- [2D flow around a circle](examples/TwoD_Circle.jl)
+- [2D flow around a circle (also demo how to log pressure solver)](examples/TwoD_Circle.jl)
 - [2D flow around a circle with periodic boundary conditions](examples/TwoD_CirclePeriodicBC.jl)
 - [2D flow around a circle in 1DOF vortex-induced-vibration](examples/TwoD_CircleVIV.jl)
 - [2D flow around a flapping plate](examples/TwoD_Hover.jl)

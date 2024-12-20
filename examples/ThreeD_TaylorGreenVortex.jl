@@ -15,7 +15,7 @@ end
 
 # Initialize CUDA simulation
 # using CUDA
-sim = TGV()#mem=CUarray);
+sim = TGV()#mem=CUDA.CuArray);
 
 # Create a video using Makie
 dat = sim.flow.σ[inside(sim.flow.σ)] |> Array; # CPU buffer array
