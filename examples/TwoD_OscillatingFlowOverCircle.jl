@@ -1,7 +1,7 @@
 using WaterLily
 using StaticArrays
-
-include("../src/TwoD_plots.jl")
+using Plots
+# using CUDA
 
 function circle(n,m;κ=1.5,Re=250,U=1)
     # define a circle at the domain center
@@ -11,7 +11,7 @@ function circle(n,m;κ=1.5,Re=250,U=1)
     # define time-varying body force `g` and periodic direction `perdir`
     accelScale, timeScale = U^2/2radius, κ*radius/U
     g(i,t) = i==1 ? -2accelScale*sin(t/timeScale) : 0
-    Simulation((n,m), (U,0), radius; ν=U*radius/Re, body, g, perdir=(1,))
+    Simulation((n,m), (U,0), radius; ν=U*radius/Re, body, g, perdir=(1,))#, mem=CuArray)
 end
 
 function run_oscillating_flow(n=392, stop=20.)
@@ -23,7 +23,7 @@ function run_oscillating_flow(n=392, stop=20.)
         sim_step!(sim,tᵢ)
         @inside sim.flow.σ[I] = WaterLily.curl(3,I,sim.flow.u)*sim.L/sim.U
         @inside sim.flow.σ[I] = ifelse(abs(sim.flow.σ[I])<0.001,0.0,sim.flow.σ[I])
-        flood(sim.flow.σ,shift=(-2,-1.5),clims=(-8,8), axis=([], false),
+        flood(sim.flow.σ|>Array,shift=(-2,-1.5),clims=(-8,8), axis=([], false),
               cfill=:seismic,legend=false,border=:none,size=(n,n))
         body_plot!(sim)
     end
