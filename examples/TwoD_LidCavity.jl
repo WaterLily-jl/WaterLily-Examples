@@ -1,5 +1,5 @@
 using WaterLily
-include("../src/TwoD_plots.jl")
+using Plots
 
 # velocity magnitude
 mag(I,u) = √sum(ntuple(i->0.25*(u[I,i]+u[I+δ(i,I),i])^2,length(I)))
@@ -38,7 +38,7 @@ L = 2^7
 U = 1.0
 Re = 100
 # using CUDA
-sim = Simulation((L,L),(0.0,0.0),L;U=U,ν=U*L/Re,mem=Array)
+sim = Simulation((L,L),(0.0,0.0),L;U=U,ν=U*L/Re)#,mem=CuArray)
 
 # get start time
 t₀ = round(sim_time(sim))

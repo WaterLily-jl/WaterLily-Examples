@@ -1,6 +1,6 @@
 using WaterLily
 using StaticArrays
-include("../src/TwoD_plots.jl")
+using Plots
 
 function circle(n,m;Re=550,U=1,mem=Array,T=Float32)
     R, x0 = m/18, m/2+1
@@ -16,13 +16,14 @@ function circle(n,m;Re=550,U=1,mem=Array,T=Float32)
 end
 
 # make a simulation and run it
-sim = circle(3*2^7,2^8,mem=Array)
+# using CUDA
+sim = circle(3*2^7,2^8)#,mem=CuArray)
 sim_gif!(sim,duration=10,clims=(-5,5),plotbody=true)
 
 # get force on first body
 f1 = WaterLily.pressure_force(sim.flow,sim.body.bodies[1])
-flood(sim.flow.f[:,:,1],clims=(-1,1)) # check that this is only non-zero near the first body
+flood(sim.flow.f[:,:,1]|>Array,clims=(-1,1)) # check that this is only non-zero near the first body
 
 # force on the second
 f2 = WaterLily.pressure_force(sim.flow,sim.body.bodies[2])
-flood(sim.flow.f[:,:,1],clims=(-1,1)) # check that this is only non-zero near the first body
+flood(sim.flow.f[:,:,1]|>Array,clims=(-1,1)) # check that this is only non-zero near the first body
