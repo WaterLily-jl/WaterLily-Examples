@@ -1,6 +1,4 @@
-using WaterLily
-using Plots; gr()
-using StaticArrays
+using WaterLily,StaticArrays,Plots
 
 # required to keep things global
 let

@@ -1,5 +1,4 @@
-using WaterLily
-using StaticArrays
+using WaterLily,StaticArrays
 include("../src/ThreeD_plots.jl")
 function jelly(p=5;Re=5e2,mem=Array,U=1)
     # Define simulation size, geometry dimensions, & viscosity

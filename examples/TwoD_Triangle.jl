@@ -1,5 +1,4 @@
-using WaterLily
-using StaticArrays
+using WaterLily,StaticArrays,Plots
 
 norm(x) = √sum(abs2,x)
 function make_sim(;L=2^5,U=1,Re=250,mem=Array)
@@ -26,5 +25,5 @@ function make_sim(;L=2^5,U=1,Re=250,mem=Array)
 end
 # using CUDA
 # intialize
-sim = make_sim()#mem=CuArray)
+sim = make_sim()#mem=CUDA.CuArray)
 sim_gif!(sim,duration=10,clims=(-5,5),plotbody=true,dpi=300)
