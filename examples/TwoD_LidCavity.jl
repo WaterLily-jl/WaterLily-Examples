@@ -1,5 +1,4 @@
-using WaterLily
-using Plots
+using WaterLily,Plots
 
 # velocity magnitude
 mag(I,u) = √sum(ntuple(i->0.25*(u[I,i]+u[I+δ(i,I),i])^2,length(I)))
@@ -33,18 +32,19 @@ end
     push!(a.Δt,WaterLily.CFL(a))
 end
 
-# Initialize simulation
-L = 2^7
-U = 1.0
-Re = 100
+function Lid_cavity(;L=2^6,U=1.0,Re=100,T=Float32,mem=Array)
+    # make the simulations
+    Simulation((L,L),(0,0),L;U=U,ν=U*L/Re,T,mem)
+end
+
 # using CUDA
-sim = Simulation((L,L),(0.0,0.0),L;U=U,ν=U*L/Re)#,mem=CuArray)
+sim = Lid_cavity(L=2^7)#,mem=CuArray)
 
 # get start time
 t₀ = round(sim_time(sim))
 duration = 20; step = 0.1
 
-anim = @animate for tᵢ in range(t₀,t₀+duration;step)
+@gif for tᵢ in range(t₀,t₀+duration;step)
 
     # update until time tᵢ in the background
     sim_step!(sim,tᵢ)
@@ -56,4 +56,3 @@ anim = @animate for tᵢ in range(t₀,t₀+duration;step)
     # print time step
     println("tU/L=",round(tᵢ,digits=4),", Δt=",round(sim.flow.Δt[end],digits=3))
 end
-gif(anim,"lid_cavity.gif",fps=15)

@@ -1,6 +1,4 @@
-using WaterLily
-using StaticArrays
-using Plots
+using WaterLily,StaticArrays,Plots
 
 function make_sim(;L=2^5,U=1,Re=250,mem=Array)
 
@@ -21,7 +19,7 @@ function make_sim(;L=2^5,U=1,Re=250,mem=Array)
     # make a simulation
     Simulation((8L,4L),(U,0),L;U,ν=U*L/Re,body,T=Float64,mem)
 end
-using CUDA
+# using CUDA
 # intialize and run
-sim = make_sim(;mem=CuArray)
+sim = make_sim()#;mem=CUDA.CuArray)
 sim_gif!(sim,duration=10,clims=(-10,10),plotbody=true)

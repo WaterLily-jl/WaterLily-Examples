@@ -1,5 +1,4 @@
-using WaterLily
-using Plots
+using WaterLily,Plots
 
 cID = "2DCircle"
 
@@ -10,8 +9,8 @@ function circle(n,m;Re=250,U=1,mem=Array)
 end
 
 # Initialize the simulation with GPU Array
-using CUDA
-sim = circle(3*2^6,2^7; mem=CuArray);
+# using CUDA
+sim = circle(3*2^6,2^7);#mem=CuArray)
 
 WaterLily.logger(cID) # Log the residual of pressure solver
 #= NOTE: 

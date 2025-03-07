@@ -1,5 +1,4 @@
-using WaterLily
-using Plots
+using WaterLily,Plots
 
 # velocity magnitude
 mag(I,u) = √sum(ntuple(i->0.25*(u[I,i]+u[I+δ(i,I),i])^2,length(I)))
@@ -37,15 +36,19 @@ end
     push!(a.Δt,WaterLily.CFL(a))
 end
 
-# Initialize simulation
-L = 2^7
-U = 1.0
-Re = 100
-# pressure gradient required to drive the flow to u~1
-g(i, t) = i == 1 ? U^2/(L/2)^2 : 0
+function channel(;L=2^6,U=1.0,Re=100,T=Float32,mem=Array)
+
+    # pressure gradient required to drive the flow to u~1
+    g(i,x,t) = i == 1 ? U^2/(L/2)^2 : 0
+
+    # make the simulations
+    sim = Simulation((4L,L),(0,0),L;U=U,ν=U*L/Re,g,perdir=(1,),T,mem)
+end
 
 # using CUDA
-sim = Simulation((4L,L),(0.0,0.0),L;U=U,ν=U*L/Re,g,perdir=(1,))#,mem=CuArray)
+# make the sim
+sim = channel(L=2^7)#;mem=CUDA.CuArray
+
 
 # get start time
 t₀ = round(sim_time(sim))

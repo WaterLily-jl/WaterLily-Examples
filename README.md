@@ -94,7 +94,8 @@ import CUDA
 vortex = TGV(T=Float32,mem=CUDA.CuArray)
 sim_step!(vortex,1)
 ```
-For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`. Note that Julia 1.9 is required for AMD GPUs.
+For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`. 
+> **_NOTE:_** Julia 1.9 is required for AMD GPUs.
 
 #### Moving bodies
 
@@ -134,7 +135,7 @@ function circle(n,m;Re=250,U=1)
 
     # define time-varying body force `g` and periodic direction `perdir`
     accelScale, timeScale = U^2/2radius, radius/U
-    g(i,t) = i==1 ? -2accelScale*sin(t/timeScale) : 0
+    g(i,x,t) = i==1 ? -2accelScale*sin(t/timeScale) : 0
     Simulation((n,m), (U,0), radius; ν=U*radius/Re, body, g, perdir=(1,))
 end
 ```
@@ -144,11 +145,13 @@ The `perdir` argument is a tuple that specifies the directions to which periodic
 
 #### Accelerating reference frame
 
+![Accelerating flow](assets/accelerating.gif)
+
 WaterLily gives the possibility to set up a `Simulation` using time-varying boundary conditions for the velocity field, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_SlowStartCircle.jl). This can be used to simulate a flow in an accelerating reference frame. The following example demonstrates how to set up a `Simulation` with a time-varying velocity field.
 ```julia
 using WaterLily
 # define time-varying velocity boundary conditions
-Ut(i,t::T;a0=0.5) where T = i==1 ? convert(T, a0*t) : zero(T)
+Ut(i,x,t::T;a0=0.5) where T = i==1 ? convert(T, a0*t) : zero(T)
 # pass that to the function that creates the simulation
 sim = Simulation((256,256), Ut, 32)
 ```
@@ -156,6 +159,8 @@ The `Ut` function is used to define the time-varying velocity field. In this exa
 
 
 #### Periodic and convective boundary conditions
+
+![periodic flow](assets/periodic.gif)
 
 In addition to the standard free-slip (or reflective) boundary conditions, WaterLily also supports periodic boundary conditions, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_circle_periodicBC_convectiveBC.jl). For instance, to set up a `Simulation` with periodic boundary conditions in the "y" direction the `perdir=(2,)` keyword argument should be passed
 ```julia
@@ -212,12 +217,12 @@ This would write the velocity and pressure fields to a file named `simple_writer
 using WaterLily,WriteVTK
 
 # make a writer with some attributes, need to output to CPU array to save file (|> Array)
-vtk_velocity(a::Simulation) = a.flow.u |> Array;
-vtk_pressure(a::Simulation) = a.flow.p |> Array;
-vtk_body(a::Simulation) = (measure_sdf!(a.flow.σ, a.body, WaterLily.time(a));
-                                        a.flow.σ |> Array;)
-vtk_lamda(a::Simulation) = (@inside a.flow.σ[I] = WaterLily.λ₂(I, a.flow.u);
-                            a.flow.σ |> Array;)
+vtk_velocity(a::AbstractSimulation) = a.flow.u |> Array;
+vtk_pressure(a::AbstractSimulation) = a.flow.p |> Array;
+vtk_body(a::AbstractSimulation) = (measure_sdf!(a.flow.σ, a.body, WaterLily.time(a));
+                                   a.flow.σ |> Array;)
+vtk_lamda(a::AbstractSimulation) = (@inside a.flow.σ[I] = WaterLily.λ₂(I, a.flow.u);
+                                    a.flow.σ |> Array;)
 
 # map field names to values in the file
 custom_attrib = Dict(
@@ -235,9 +240,12 @@ close(writer)
 The functions that are passed to the `attrib` (custom attributes) must follow the same structure as what is shown in this example, that is, given a `Simulation`, return an N-dimensional (scalar or vector) field. The `vtkwriter` function will automatically write the data to a `.pvd` file, which can be read by ParaView. The prototype for the `vtkwriter` function is:
 ```julia
 # prototype vtk writer function
-custom_vtk_function(a::Simulation) = ... |> Array
+custom_vtk_function(a::AbstractSimulation) = ... |> Array
 ```
 where `...` should be replaced with the code that generates the field you want to write to the file. The piping to a (CPU) `|> Array` is necessary to ensure that the data is written to the CPU before being written to the file for GPU simulations.
+
+> **_💡 Tip: Paraview_**
+Since we save the entire data array of a field, the ghost cells (see below) are also saved. This is useful for debugging, but useless for post-processing and can actually pollute the visuals. To get the actual field in `Paraview`, you can use the `ExtractSubset` filter and select the `VOI` (Volume of Interest) to remove the first and the last cell in each direction. ![subset](assets/ExtractSubset.png)
 
 > **_NOTE:_** 
 The `WriteVTK.jl` package requires components to come first when writing vector and tensor fields, but they are store with component last in `WaterLily`. For vector field, this permutation of dimensions is done automatically in the `write!` function ($V_{ijkα}→ V_{αijk}$). This is why you can simply pass `sim.flow.u |> Array` to the writer.
@@ -258,7 +266,8 @@ write!(writer, sim)
 # don't forget to close the file
 close(writer)
 ```
-Internally, this function reads the last file in the `.pvd` file and uses that to set the `velocity` and `pressure` fields in the simulation. The `sim_time` is also set to the last value saved in the `.pvd` file. The function also returns a `vtkwriter` that will append the new data to the file used to restart the simulation. __Note__ that the simulation object `sim` that will be filled must be identical to the one saved to the file for this restart to work, that is the same size, same body, etc.
+Internally, this function reads the last file in the `.pvd` file and use that to set the `velocity` and `pressure` fields in the simulation. The `sim_time` is also set to the last value saved in the `.pvd` file. The function also returns a `vtkwriter` that will append the new data to the file used to restart the simulation. 
+> **_NOTE:_** The simulation object `sim` that will be filled must be identical to the one saved to the file for this restart to work, that is, the same size, same body, etc.
 
 #### Overwriting default functions
 
@@ -270,7 +279,8 @@ end
 ```
 in your main script. This means that internally when WaterLily calls `mom_step!`, it will call this new function and not the one in `src/Flow.jl`. This can be used to implement custom boundary conditions, custom body forces, etc.
 
-> **_NOTE:_**  In WaterLily we use a [staggered grid](https://tum-pbs.github.io/PhiFlow/Staggered_Grids.html), this means that the velocity component and the pressure are not at the same physical location in the finite-volume mesh, see figure below. You have to be careful if you play with the `BC!` function to make sure that you are applying the boundary condition to the correct physical location.
+### ⚙️ Internal working:
+In WaterLily we use a [staggered grid](https://tum-pbs.github.io/PhiFlow/Staggered_Grids.html), this means that the velocity component and the pressure are not at the same physical location in the finite-volume mesh, see figure below. You have to be careful if you play with different fields to make sure that you are performing operations at the correct physical location. This means that some fields might need to be cell-averaged or interpolated to be at the correct location.
 
 ![Staggered grid](assets/WaterLily_grid.svg)
 

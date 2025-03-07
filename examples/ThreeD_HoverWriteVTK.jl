@@ -14,9 +14,9 @@ function hover(L=2^6;Re=250,U=1,amp=π/4,ϵ=0.5,thk=2ϵ+√3,mem=Array)
     Simulation((6L,6L,L),(0,0,0),L;U,ν=U*L/Re,body=AutoBody(sdf,map),ϵ,perdir=(3,),mem)
 end
 
-using CUDA
+# using CUDA
 # make the sim
-sim = hover(64;mem=CuArray)
+sim = hover(64)#;mem=CUDA.CuArray)
 
 # we know have to define these functions, for example:
 vtk_velocity(a::AbstractSimulation) = a.flow.u |> Array

@@ -1,6 +1,4 @@
-using WaterLily
-using ReadVTK, WriteVTK
-using StaticArrays
+using WaterLily,StaticArrays,ReadVTK,WriteVTK
 
 function circle(p=4;Re=250,mem=Array,U=1)
     # Define simulation size, geometry dimensions, viscosity
@@ -22,8 +20,8 @@ wr = vtkWriter("TwoD_circle_vtk_restart")
 sim_step!(sim,1); write!(wr, sim); close(wr)
 
 # re-start the sim from a paraview file but on the GPU this time
-import CUDA
-restart = circle(;mem=CUDA.CuArray);
+# using CUDA
+restart = circle()#;mem=CUDA.CuArray);
 wr2 = restart_sim!(restart; fname="TwoD_circle_vtk_restart.pvd")
 
 # intialize

@@ -1,5 +1,5 @@
-using WaterLily
-using StaticArrays
+using WaterLily,StaticArrays
+
 function donut(p=6;Re=1e3,mem=Array,U=1)
     # Define simulation size, geometry dimensions, viscosity
     n = 2^p
