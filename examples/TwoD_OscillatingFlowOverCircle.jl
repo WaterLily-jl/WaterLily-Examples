@@ -10,7 +10,7 @@ function circle(n,m;κ=1.5,Re=250,U=1)
 
     # define time-varying body force `g` and periodic direction `perdir`
     accelScale, timeScale = U^2/2radius, κ*radius/U
-    g(i,t) = i==1 ? -2accelScale*sin(t/timeScale) : 0
+    g(i,x,t) = i==1 ? -2accelScale*sin(t/timeScale) : 0
     Simulation((n,m), (U,0), radius; ν=U*radius/Re, body, g, perdir=(1,))#, mem=CuArray)
 end
 

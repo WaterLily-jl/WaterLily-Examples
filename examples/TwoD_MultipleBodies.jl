@@ -1,6 +1,4 @@
-using WaterLily
-using StaticArrays
-using Plots
+using WaterLily,StaticArrays,Plots
 
 function circle(n,m;Re=550,U=1,mem=Array,T=Float32)
     R, x0 = m/18, m/2+1
@@ -17,7 +15,7 @@ end
 
 # make a simulation and run it
 # using CUDA
-sim = circle(3*2^7,2^8)#,mem=CuArray)
+sim = circle(3*2^7,2^8)#,mem=CUDA.CuArray)
 sim_gif!(sim,duration=10,clims=(-5,5),plotbody=true)
 
 # get force on first body
