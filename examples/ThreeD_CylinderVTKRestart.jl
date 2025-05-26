@@ -17,12 +17,12 @@ sim = circle();
 # make a vtk writer
 wr = vtkWriter("TwoD_circle_vtk_restart")
 # sim for a bit, write and close
-sim_step!(sim,1); write!(wr, sim); close(wr)
+sim_step!(sim,1);  save!(wr, sim); close(wr)
 
 # re-start the sim from a paraview file but on the GPU this time
 # using CUDA
 restart = circle()#;mem=CUDA.CuArray);
-wr2 = restart_sim!(restart; fname="TwoD_circle_vtk_restart.pvd")
+wr2 = load!(restart; fname="TwoD_circle_vtk_restart.pvd")
 
 # intialize
 t₀ = sim_time(restart); duration = 10; tstep = 0.1
@@ -32,7 +32,7 @@ t₀ = sim_time(restart); duration = 10; tstep = 0.1
     # update until time tᵢ in the background
     sim_step!(restart,tᵢ,remeasure=false)
     # write again to the "TwoD_circle_vtk_restart.pvd" file
-    write!(wr2, restart)
+    save!(wr2, restart)
     # print time step
     println("tU/L=",round(tᵢ,digits=4),", Δt=",round(restart.flow.Δt[end],digits=3))
 end

@@ -16,14 +16,26 @@ let
     # initial condition FSI
     p0=radius/3; v0=0; a0=0; t0=0
 
+    mutable struct Mapping <: Function
+        x :: Float64
+        t :: Float64
+        vx :: Float64
+        function Mapping(x)
+            new(x, 0, 0)
+        end
+    end
+    function (l::Mapping)(x,t)# this allows the structure to be called like: Mapping(x,t)
+        return x - SA[l.x + (t-l.t)*l.vx, 0]
+    end
+
     # motion function uses global var to adjust
-    posx(t) = p0 + (t-t0)*v0
+    # posx(t) = p0 + (t-t0)*v0
 
     # motion definition
-    map(x,t) = x - SA[0, posx(t)]
+    # map(x,t) = x - SA[posx(t), 0]
 
     # mₐke a body
-    circle = AutoBody((x,t)->√sum(abs2, x .- center) - radius, map)
+    circle = AutoBody((x,t)->√sum(abs2, x .- center) - radius, map=Mapping(p0))
 
     # generate sim
     sim = Simulation((6L,4L), (U,0), radius; ν=U*radius/Re, body=circle)
@@ -48,7 +60,7 @@ let
 
             # compute motion and acceleration 1DOF
             Δt = sim.flow.Δt[end]
-            accel = (force[2]- k*p0 + mₐ*a0)/(m + mₐ)
+            accel = (force[1] - k*p0 + mₐ*a0)/(m + mₐ)
             p0 += Δt*(v0+Δt*accel/2.)
             v0 += Δt*accel
             a0 = accel

@@ -25,7 +25,7 @@ vtk_vorticity(a::AbstractSimulation) = (@inside a.flow.σ[I] = WaterLily.curl(3,
 vtk_body(a::AbstractSimulation) = (measure_sdf!(a.flow.σ, a.body, WaterLily.time(a.flow)); a.flow.σ |> Array)
 function vtk_laplacian(a::AbstractSimulation)
     L = copy(a.flow.μ₁); N = length(size(a.flow.μ₁))
-    WaterLily.@loop L[I,:,:] .= WaterLily.∇²u(I,a.flow.u) over I in WaterLily.inside_u(a.flow.u)
+    WaterLily.@loop L[I,:,:] .= WaterLily.S(I,a.flow.u) over I in WaterLily.inside_u(a.flow.u)
     return permutedims(L,[N,1:N-1...]) |> Array # permute dims once, the writer will do it another time
 end
 
@@ -44,6 +44,6 @@ wr = vtkWriter("ThreeD_hover"; attrib=custom_write_attributes)
 @time for tᵢ in range(0.,10;step=0.1)
     println("tU/L=",round(tᵢ,digits=4))
     sim_step!(sim,tᵢ;remeasure=true)
-    write!(wr, sim)
+    save!(wr, sim)
 end
 close(wr)
