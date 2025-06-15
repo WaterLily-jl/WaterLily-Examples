@@ -1,7 +1,7 @@
 using WaterLily
 using StaticArrays
-
-include("../src/TwoD_plots.jl")
+using Plots
+# using CUDA
 
 function hover(L=2^6;Re=250,U=1,amp=π/4,ϵ=0.5,thk=2ϵ+√2)
     # Line segment SDF
@@ -14,7 +14,7 @@ function hover(L=2^6;Re=250,U=1,amp=π/4,ϵ=0.5,thk=2ϵ+√2)
         α = amp*cos(t*U/L); R = SA[cos(α) sin(α); -sin(α) cos(α)]
         R * (x - SA[3L-L*sin(t*U/L),4L])
     end
-    Simulation((6L,6L),(0,0),L;U,ν=U*L/Re,body=AutoBody(sdf,map),ϵ)
+    Simulation((6L,6L),(0,0),L;U,ν=U*L/Re,body=AutoBody(sdf,map),ϵ)#,mem=CuArray)
 end
 
 function run_hover(stop=20.)
@@ -26,7 +26,7 @@ function run_hover(stop=20.)
         sim_step!(sim,tᵢ)
         @inside sim.flow.σ[I] = WaterLily.curl(3,I,sim.flow.u)*sim.L/sim.U
         @inside sim.flow.σ[I] = ifelse(abs(sim.flow.σ[I])<0.001,0.0,sim.flow.σ[I])
-        flood(sim.flow.σ,shift=(-2,-1.5),clims=(-5,5), axis=([], false),
+        flood(sim.flow.σ|>Array,shift=(-2,-1.5),clims=(-5,5), axis=([], false),
               cfill=:seismic,legend=false,border=:none,size=(6*sim.L,6*sim.L))
         body_plot!(sim)
     end

@@ -1,7 +1,6 @@
 using WaterLily
 using Plots; gr()
 using StaticArrays
-include("../src/TwoD_plots.jl")
 
 # required to keep things global
 let

@@ -1,6 +1,6 @@
 # Example simulations using [WaterLily.jl](https://github.com/WaterLily-jl/WaterLily.jl)
 
-This repository contains example simulations using the [WaterLily.jl](https://github.com/WaterLily-jl/WaterLily.jl) package. Some tutorials are presented as [`Pluto.jl`](https://plutojl.org/) notebooks and the rest are Julia scripts. The examples are divided into 2D and 3D simulations and are listed below. The examples are intended to demonstrate the capabilities of the `WaterLily.jl` package and to provide a starting point for users to create their own simulations. 
+This repository contains example simulations using the [WaterLily.jl](https://github.com/WaterLily-jl/WaterLily.jl) package. Some tutorials are presented as [`Pluto.jl`](https://plutojl.org/) notebooks and the rest are Julia scripts. The examples are divided into 2D and 3D simulations and are listed below. The examples are intended to demonstrate the capabilities of the `WaterLily.jl` package and to provide a starting point for users to create their own simulations.
 
 ### Youtube tutorials
 
@@ -22,7 +22,7 @@ Two example notebooks are available to help you get started with WaterLily, they
 Below we provide a list of all the examples available
 
 #### 2D
-- [2D flow around a circle](examples/TwoD_Circle.jl)
+- [2D flow around a circle (also demo how to log pressure solver)](examples/TwoD_Circle.jl)
 - [2D flow around a circle with periodic boundary conditions](examples/TwoD_CirclePeriodicBC.jl)
 - [2D flow around a circle in 1DOF vortex-induced-vibration](examples/TwoD_CircleVIV.jl)
 - [2D flow around a flapping plate](examples/TwoD_Hover.jl)
@@ -94,7 +94,7 @@ import CUDA
 vortex = TGV(T=Float32,mem=CUDA.CuArray)
 sim_step!(vortex,1)
 ```
-For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`. 
+For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`.
 > **_NOTE:_** Julia 1.9 is required for AMD GPUs.
 
 #### Moving bodies
@@ -211,7 +211,7 @@ body = Bodies(bodies, repeat([+],length(bodies)-1))
 As this method work for any `AbstractBody`, it will also work for body generated using the sister package [ParametricBodies.jl](https://github.com/WaterLily-jl/ParametricBodies.jl).
 ```julia
 bodies = AbstractBody[]
-# a first circle using autoBody 
+# a first circle using autoBody
 push!(bodies,AutoBody((x,t)->√sum(abs2, x .- SA_F32[3.75L,2.5L]) - L/2))
 # another one from parametricbodies
 cps = SA_F32[1 1 0 -1 -1 -1  0  1 1
@@ -295,18 +295,17 @@ write!(writer, sim)
 # don't forget to close the file
 close(writer)
 ```
-Internally, this function reads the last file in the `.pvd` file and use that to set the `velocity` and `pressure` fields in the simulation. The `sim_time` is also set to the last value saved in the `.pvd` file. The function also returns a `vtkwriter` that will append the new data to the file used to restart the simulation. 
-> **_NOTE:_** The simulation object `sim` that will be filled must be identical to the one saved to the file for this restart to work, that is, the same size, same body, etc.
+Internally, this function reads the last file in the `.pvd` file and uses that to set the `velocity` and `pressure` fields in the simulation. The `sim_time` is also set to the last value saved in the `.pvd` file. The function also returns a `vtkwriter` that will append the new data to the file used to restart the simulation. __Note__ that the simulation object `sim` that will be filled must be identical to the one saved to the file for this restart to work, that is the same size, same body, etc.
 
 #### Overwriting default functions
 
-Sometime, it might be usefull to overwrite the default functions used in the simulation. For example, the `BC!` function can be overwritten to implement a custom boundary condition, see [this example](examples/TwoD_LidCavity.jl). For example to overwrite the `mom_step!` function you will need something like this
+Sometimes, it might be useful to overwrite the default functions used in the simulation. For example, the `BC!` function can be overwritten to implement a custom boundary condition, see [this example](examples/TwoD_LidCavity.jl). For example, to overwrite the `mom_step!` function, you will need something like this
 ```julia
 function WaterLily.mom_step!(a::Flow{N},b::AbstractPoisson) where N
     ...do your thing...
 end
 ```
-in your main script. This means that internally, when EaterLily call `mom_step!` it will call this ew function and not the one in `src/Flow.jl`. This can be used to implement custom boundary conditions, custom body forces, etc.
+in your main script. This means that internally when WaterLily calls `mom_step!`, it will call this new function and not the one in `src/Flow.jl`. This can be used to implement custom boundary conditions, custom body forces, etc.
 
 > **_NOTE:_**  In WaterLily we use a [staggered grid](https://tum-pbs.github.io/PhiFlow/Staggered_Grids.html), this means that the velocity component and the pressure are not at the same physical location in the finite-volume mesh, see figure below. You have to be careful if you play with the `BC!` function to make sure that you are applying the boundary condition to the correct physical location.
 
@@ -329,4 +328,4 @@ If you have used `WaterLily.jl` for research, please __cite us__! The following 
 
 ### Contributing
 
-We are always looking for new examples to showcase the capabilities of `WaterLily.jl`. If you came up with amazing examples and you want to share them, please open a pull request with the new exmaple either as a `Pluto.jl` notebook or a classic script. We will be happy to review it and merge it into the repository.
+We are always looking for new examples to showcase the capabilities of `WaterLily.jl`. If you came up with amazing examples and you want to share them, please open a pull request with the new example either as a `Pluto.jl` notebook or a classic script. We will be happy to review it and merge it into the repository.
