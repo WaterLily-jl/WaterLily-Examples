@@ -12,7 +12,7 @@ end
 
 # make a simulation and run it
 sim = circle(3*2^7,2^8,mem=Array);
-sim_gif!(sim,duration=1,clims=(-5,5),remeasure=false,plotbody=true,axis=([], false),
+sim_gif!(sim,duration=30,clims=(-5,5),remeasure=false,plotbody=true,axis=([], false),
          cfill=:seismic,legend=false,border=:none)
 
 # get net force on all bodies
