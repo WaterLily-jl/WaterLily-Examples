@@ -213,9 +213,9 @@ body = AutoBody((x,t)->plane(x,t,SA[-L/2,0],SA[-1, 0])) ∩
 ```
 where `∩` (`\cap<tab>`) is the [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)) operation. We can also take the [union](https://en.wikipedia.org/wiki/Union_(set_theory)) of shapes using `∪` (`\cup<tab>`) or `+`. Since `sum(iter)` is simply iterated addition, we can use this to easily combine a number of bodies together, as demonstrated in [this example](https://https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TTwoD_MultipleBodies.jl)
 ```julia
-# random position x,y ∈ [-2.5,2.5] and circle diamater r ∈ [0.75,1.5]
-body = sum(zip(eachrow(5rand(6,2).-2.5),0.75rand(6).+0.75)) do (center,radius)
-    AutoBody((x,t)->√sum(abs2, x .- 2center) - radius)
+body = sum(1:6) do _
+    center,radius = 10rand(2) .- 5, (3rand() + 3)/4
+    AutoBody((x,t)->√sum(abs2, x .- center) - radius)
 end
 ```
 which adds together 6 circles with random center and radius, as shown in the gif above.
