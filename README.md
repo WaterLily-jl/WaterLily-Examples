@@ -28,15 +28,15 @@ Below we provide a list of all the examples available
 - [2D flow around a flapping plate](examples/TwoD_Hover.jl)
 - [2D flow around the Julia logo](examples/TwoD_Julia.jl)
 - [2D Lid-driven cavity flow (show how to overwrite BC! function)](examples/TwoD_LidCavity.jl)
+- [2D flow around a square using AutoBodies set operations](examples/TwoD_Square.jl)
 - [2D flow around multiple cylinders using the AutoBodies](examples/TwoD_MultipleBodies.jl)
+- [2D flow around a foil and a moving cylinder using ParametricBodies](examples/TwoD_MultipleAbstractBodies.jl)
 - [2D flow around a circle with oscillating body force](examples/TwoD_OscillatingFlowOverCircle.jl)
 - [2D flow around circle in an accelerating frame of reference using time-dependent boundary conditions](examples/TwoD_SlowStartCircle.jl)
-- [2D flow around a square using AutoBodies set operations](examples/TwoD_Square.jl)
 - [2D Tandem airfoil motion optimisation using AutoDiff](examples/TwoD_TandemFoilOptim.jl)
 - [2D flow around a triangle with a custom sdf](examples/TwoD_Triangle.jl)
 - [2D flow around a circle fully in the terminal](examples/TwoD_UnicodePlots.jl)
 - [2D channel flow with periodic BCs](examples/TwoD_Channel.jl)
-- [2D flow around 2 cylinders using the AutoBodiy and ParametricBody](examples/TwoD_MultipleAbstractBodies.jl)
 #### 3D
 - [3D Taylor-Green vortex break down](examples/ThreeD_TaylorGreenVortex.jl)
 - [3D donut flow, using the GPU and Makie for live rendering](examples/ThreeD_Donut.jl)
@@ -95,7 +95,6 @@ vortex = TGV(T=Float32,mem=CUDA.CuArray)
 sim_step!(vortex,1)
 ```
 For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`.
-> **_NOTE:_** Julia 1.9 is required for AMD GPUs.
 
 #### Moving bodies
 
@@ -194,40 +193,53 @@ body = AutoBody(sdf, map)
 Simulation((512,384), u_BC=(1,0), L=32; body, exitBC=true)
 ```
 
-#### Multiple bodies
+#### Set operations for building and combining bodies
 
 ![Multiple bodies](assets/MultipleBodies.gif)
 
-You can also use [boolean operations](https://en.wikipedia.org/wiki/Boolean_algebra#Boolean_operations) to combine `AbstractBody` together, as demonstrated in [this example](https://https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TTwoD_MultipleBodies.jl). In this exmample we randomly place 6 circles in the domain and use the `AutoBodies` package to combine them together.
+You can also use [Set algebra operations](https://en.wikipedia.org/wiki/Algebra_of_sets#Fundamental_properties_of_set_algebra) to combine `AbstractBody`s together. For example, we can build a square as the intersection of four planes as in [this example](https://github.com/marinlauber/Tutorials-WaterLily/blob/examples-multiple-bodies/examples/TwoD_Square.jl)
+
 ```julia
-bodies = AbstractBody[]
-# random position x,y ∈ [-2.5,2.5] and circle diamater r ∈ [0.75,1.5]
-for (c,r) ∈ zip(eachrow(5rand(6,2).-2.5),0.75rand(6).+0.75)
-    push!(bodies,AutoBody((x,t)->√sum(abs2, x.-x0.-2c.*R) - r*R))
+# plane sdf
+function plane(x,t,center,normal)
+    normal = normal/√sum(abs2,normal)
+    sum((x .- center).*normal)
 end
-# combine into one body
-body = Bodies(bodies, repeat([+],length(bodies)-1))
+# square is intersection of four planes
+body = AutoBody((x,t)->plane(x,t,SA[-L/2,0],SA[-1, 0])) ∩ 
+       AutoBody((x,t)->plane(x,t,SA[ 0,L/2],SA[ 0, 1])) ∩ 
+       AutoBody((x,t)->plane(x,t,SA[L/2, 0],SA[ 1, 0])) ∩ 
+       AutoBody((x,t)->plane(x,t,SA[0,-L/2],SA[ 0,-1]))
 ```
+where `∩` (`\cap<tab>`) is the [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)) operation. We can also take the [union](https://en.wikipedia.org/wiki/Union_(set_theory)) of shapes using `∪` (`\cup<tab>`) or `+`. Since `sum(iter)` is simply iterated addition, we can use this to easily combine a number of bodies together, as demonstrated in [this example](https://https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TTwoD_MultipleBodies.jl)
+```julia
+# random position x,y ∈ [-2.5,2.5] and circle diamater r ∈ [0.75,1.5]
+body = sum(zip(eachrow(5rand(6,2).-2.5),0.75rand(6).+0.75)) do (center,radius)
+    AutoBody((x,t)->√sum(abs2, x .- 2center) - radius)
+end
+```
+which adds together 6 circles with random center and radius, as shown in the gif above.
+
 As this method work for any `AbstractBody`, it will also work for body generated using the sister package [ParametricBodies.jl](https://github.com/WaterLily-jl/ParametricBodies.jl).
 ```julia
-bodies = AbstractBody[]
-# a first circle using autoBody
-push!(bodies,AutoBody((x,t)->√sum(abs2, x .- SA_F32[3.75L,2.5L]) - L/2))
-# another one from parametricbodies
-cps = SA_F32[1 1 0 -1 -1 -1  0  1 1
-             0 1 1  1  0 -1 -1 -1 0]*L/2 .+ [2L,1.5L]
-weights = SA_F32[1.,√2/2,1.,√2/2,1.,√2/2,1.,√2/2,1.]
-knots =   SA_F32[0,0,0,1/4,1/4,1/2,1/2,3/4,3/4,1,1,1]
-# make a nurbs curve and a body for the simulation
-push!(bodies,ParametricBody(NurbsCurve(cps,knots,weights)))
-# combine into one body
-body = Bodies(bodies, [+])
+function circle_and_foil(L;Re=550,U=1,mem=Array,T=Float32)
+    # A moving circle using AutoBody
+    circle = AutoBody((x,t)->√sum(abs2,x)-L÷2, (x,t)->x-SA[L+U*t,3L÷2-10])
+
+    # A foil defined by the difference between an upper and lower surface
+    upper = ParametricBody(BSplineCurve(SA[5L 4L 3L 3L; 2L 5L÷2 5L÷2 2L],degree=3;T))
+    lower = ParametricBody(BSplineCurve(SA[5L 3L; 2L 2L],degree=1;T))
+    foil = upper-lower
+
+    # Simulate the flow past the two general bodies
+    Simulation((10L,4L), (U,0), L; ν=U*L/Re, body=foil+circle, mem, T)
+end
 ```
-Which wil give you the flow around two circles, one defined using `AutoBody` and the other using `ParametricBody`.
+[This example](https://github.com/marinlauber/Tutorials-WaterLily/blob/examples-multiple-bodies/examples/TwoD_MultiplesAbstractBodies.jl) defines a foil section as the set [difference](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement) `-` of the upper and lower surfaces (both defined by B-Spline curves) and adds a circle moving with the flow velocity just below it.
 
 ![Multiple AbstractBody](assets/MultipleAbstractBodies.gif)
 
-> **_NOTE:_** Type dispatch allows you to call the `pressure_force` and `viscous_force` functions on any `AbstractBody` object and the correct method will be called, although the method behind are different.
+> **Note**: The various `force(sim)` functions will return the combined force on all of the bodies in a simulation! See [this example](https://https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TTwoD_MultipleBodies.jl) for a custom function to extract the forces on each geometry.
 
 #### Writing to a VTK file
 
