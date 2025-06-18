@@ -239,7 +239,7 @@ end
 
 ![Multiple AbstractBody](assets/MultipleAbstractBodies.gif)
 
-> **Note**: The various `force(sim)` functions will return the combined force on all of the bodies in a simulation! See [this example](https://https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TTwoD_MultipleBodies.jl) for a custom function to extract the forces on each geometry.
+> **Note**: The various `force(sim)` functions will return the combined force on all of the bodies in a simulation! See [this example](https://https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_MultipleBodies.jl) for a custom function to extract the forces on each geometry.
 
 #### Writing to a VTK file
 
