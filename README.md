@@ -197,7 +197,7 @@ Simulation((512,384), u_BC=(1,0), L=32; body, exitBC=true)
 
 ![Multiple bodies](assets/MultipleBodies.gif)
 
-You can also use [Set algebra operations](https://en.wikipedia.org/wiki/Algebra_of_sets#Fundamental_properties_of_set_algebra) to combine `AbstractBody`s together. For example, we can build a square as the intersection of four planes as in [this example](https://github.com/marinlauber/Tutorials-WaterLily/blob/examples-multiple-bodies/examples/TwoD_Square.jl)
+You can also use [Set algebra operations](https://en.wikipedia.org/wiki/Algebra_of_sets#Fundamental_properties_of_set_algebra) to combine `AbstractBody`s together. For example, we can build a square as the intersection of four planes as in [this square example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/main/examples/TwoD_Square.jl)
 
 ```julia
 # plane sdf
@@ -211,7 +211,7 @@ body = AutoBody((x,t)->plane(x,t,SA[-L/2,0],SA[-1, 0])) ∩
        AutoBody((x,t)->plane(x,t,SA[L/2, 0],SA[ 1, 0])) ∩ 
        AutoBody((x,t)->plane(x,t,SA[0,-L/2],SA[ 0,-1]))
 ```
-where `∩` (`\cap<tab>`) is the [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)) operation. We can also take the [union](https://en.wikipedia.org/wiki/Union_(set_theory)) of shapes using `∪` (`\cup<tab>`) or `+`. Since `sum(iter)` is simply iterated addition, we can use this to easily combine a number of bodies together, as demonstrated in [this example](https://https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TTwoD_MultipleBodies.jl)
+where `∩` (`\cap<tab>`) is the [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)) operation. We can also take the [union](https://en.wikipedia.org/wiki/Union_(set_theory)) of shapes using `∪` (`\cup<tab>`) or `+`. Since `sum(iter)` is simply iterated addition, we can use this to easily combine a number of bodies together, as demonstrated in [this multiple circles example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/main/examples/TwoD_MultipleBodies.jl)
 ```julia
 body = sum(1:6) do _
     center,radius = 10rand(2) .- 5, (3rand() + 3)/4
@@ -235,11 +235,11 @@ function circle_and_foil(L;Re=550,U=1,mem=Array,T=Float32)
     Simulation((10L,4L), (U,0), L; ν=U*L/Re, body=foil+circle, mem, T)
 end
 ```
-[This example](https://github.com/marinlauber/Tutorials-WaterLily/blob/examples-multiple-bodies/examples/TwoD_MultiplesAbstractBodies.jl) defines a foil section as the set [difference](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement) `-` of the upper and lower surfaces (both defined by B-Spline curves) and adds a circle moving with the flow velocity just below it.
+[This foil and circle example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/main/examples/TwoD_MultiplesAbstractBodies.jl) defines a foil section as the set [difference](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement) `-` of the upper and lower surfaces (both defined by B-Spline curves) and adds a circle moving with the flow velocity just below it.
 
 ![Multiple AbstractBody](assets/MultipleAbstractBodies.gif)
 
-> **Note**: The various `force(sim)` functions will return the combined force on all of the bodies in a simulation! See [this example](https://https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_MultipleBodies.jl) for a custom function to extract the forces on each geometry.
+> **Note**: The various `force(sim)` functions will return the combined force on all of the bodies in a simulation! See the two examples above for ideas to extract the forces on one or all geometries in a simulation.
 
 #### Writing to a VTK file
 
