@@ -1,6 +1,6 @@
 # Example simulations using [WaterLily.jl](https://github.com/WaterLily-jl/WaterLily.jl)
 
-This repository contains example simulations using the [WaterLily.jl](https://github.com/WaterLily-jl/WaterLily.jl) package. Some tutorials are presented as [`Pluto.jl`](https://plutojl.org/) notebooks and the rest are Julia scripts. The examples are divided into 2D and 3D simulations and are listed below. The examples are intended to demonstrate the capabilities of the `WaterLily.jl` package and to provide a starting point for users to create their own simulations. 
+This repository contains example simulations using the [WaterLily.jl](https://github.com/WaterLily-jl/WaterLily.jl) package. Some tutorials are presented as [`Pluto.jl`](https://plutojl.org/) notebooks and the rest are Julia scripts. The examples are divided into 2D and 3D simulations and are listed below. The examples are intended to demonstrate the capabilities of the `WaterLily.jl` package and to provide a starting point for users to create their own simulations.
 
 ### Youtube tutorials
 
@@ -28,10 +28,11 @@ Below we provide a list of all the examples available
 - [2D flow around a flapping plate](examples/TwoD_Hover.jl)
 - [2D flow around the Julia logo](examples/TwoD_Julia.jl)
 - [2D Lid-driven cavity flow (show how to overwrite BC! function)](examples/TwoD_LidCavity.jl)
+- [2D flow around a square using AutoBodies set operations](examples/TwoD_Square.jl)
 - [2D flow around multiple cylinders using the AutoBodies](examples/TwoD_MultipleBodies.jl)
+- [2D flow around a foil and a moving cylinder using ParametricBodies](examples/TwoD_MultipleAbstractBodies.jl)
 - [2D flow around a circle with oscillating body force](examples/TwoD_OscillatingFlowOverCircle.jl)
 - [2D flow around circle in an accelerating frame of reference using time-dependent boundary conditions](examples/TwoD_SlowStartCircle.jl)
-- [2D flow around a square using AutoBodies set operations](examples/TwoD_Square.jl)
 - [2D Tandem airfoil motion optimisation using AutoDiff](examples/TwoD_TandemFoilOptim.jl)
 - [2D flow around a triangle with a custom sdf](examples/TwoD_Triangle.jl)
 - [2D flow around a circle fully in the terminal](examples/TwoD_UnicodePlots.jl)
@@ -93,7 +94,7 @@ import CUDA
 vortex = TGV(T=Float32,mem=CUDA.CuArray)
 sim_step!(vortex,1)
 ```
-For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`. Note that Julia 1.9 is required for AMD GPUs.
+For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`.
 
 #### Moving bodies
 
@@ -143,6 +144,8 @@ The `perdir` argument is a tuple that specifies the directions to which periodic
 
 #### Accelerating reference frame
 
+![Accelerating flow](assets/accelerating.gif)
+
 WaterLily gives the possibility to set up a `Simulation` using time-varying boundary conditions for the velocity field, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_SlowStartCircle.jl). This can be used to simulate a flow in an accelerating reference frame. The following example demonstrates how to set up a `Simulation` with a time-varying velocity field.
 ```julia
 using WaterLily
@@ -155,6 +158,9 @@ The `Ut` function is used to define the time-varying velocity field. In this exa
 
 
 #### Periodic and convective boundary conditions
+
+![periodic flow](assets/periodic.gif)
+
 
 In addition to the standard free-slip (or reflective) boundary conditions, WaterLily also supports periodic boundary conditions, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_circle_periodicBC_convectiveBC.jl). For instance, to set up a `Simulation` with periodic boundary conditions in the "y" direction the `perdir=(2,)` keyword argument should be passed
 ```julia
@@ -186,6 +192,54 @@ body = AutoBody(sdf, map)
 # y-periodic boundary conditions
 Simulation((512,384), u_BC=(1,0), L=32; body, exitBC=true)
 ```
+
+#### Set operations for building and combining bodies
+
+![Multiple bodies](assets/MultipleBodies.gif)
+
+You can also use [Set algebra operations](https://en.wikipedia.org/wiki/Algebra_of_sets#Fundamental_properties_of_set_algebra) to combine `AbstractBody`s together. For example, we can build a square as the intersection of four planes as in [this example](https://github.com/marinlauber/Tutorials-WaterLily/blob/examples-multiple-bodies/examples/TwoD_Square.jl)
+
+```julia
+# plane sdf
+function plane(x,t,center,normal)
+    normal = normal/√sum(abs2,normal)
+    sum((x .- center).*normal)
+end
+# square is intersection of four planes
+body = AutoBody((x,t)->plane(x,t,SA[-L/2,0],SA[-1, 0])) ∩ 
+       AutoBody((x,t)->plane(x,t,SA[ 0,L/2],SA[ 0, 1])) ∩ 
+       AutoBody((x,t)->plane(x,t,SA[L/2, 0],SA[ 1, 0])) ∩ 
+       AutoBody((x,t)->plane(x,t,SA[0,-L/2],SA[ 0,-1]))
+```
+where `∩` (`\cap<tab>`) is the [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)) operation. We can also take the [union](https://en.wikipedia.org/wiki/Union_(set_theory)) of shapes using `∪` (`\cup<tab>`) or `+`. Since `sum(iter)` is simply iterated addition, we can use this to easily combine a number of bodies together, as demonstrated in [this example](https://https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TTwoD_MultipleBodies.jl)
+```julia
+body = sum(1:6) do _
+    center,radius = 10rand(2) .- 5, (3rand() + 3)/4
+    AutoBody((x,t)->√sum(abs2, x .- center) - radius)
+end
+```
+which adds together 6 circles with random center and radius, as shown in the gif above.
+
+As this method work for any `AbstractBody`, it will also work for body generated using the sister package [ParametricBodies.jl](https://github.com/WaterLily-jl/ParametricBodies.jl).
+```julia
+function circle_and_foil(L;Re=550,U=1,mem=Array,T=Float32)
+    # A moving circle using AutoBody
+    circle = AutoBody((x,t)->√sum(abs2,x)-L÷2, (x,t)->x-SA[L+U*t,3L÷2-10])
+
+    # A foil defined by the difference between an upper and lower surface
+    upper = ParametricBody(BSplineCurve(SA[5L 4L 3L 3L; 2L 5L÷2 5L÷2 2L],degree=3;T))
+    lower = ParametricBody(BSplineCurve(SA[5L 3L; 2L 2L],degree=1;T))
+    foil = upper-lower
+
+    # Simulate the flow past the two general bodies
+    Simulation((10L,4L), (U,0), L; ν=U*L/Re, body=foil+circle, mem, T)
+end
+```
+[This example](https://github.com/marinlauber/Tutorials-WaterLily/blob/examples-multiple-bodies/examples/TwoD_MultiplesAbstractBodies.jl) defines a foil section as the set [difference](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement) `-` of the upper and lower surfaces (both defined by B-Spline curves) and adds a circle moving with the flow velocity just below it.
+
+![Multiple AbstractBody](assets/MultipleAbstractBodies.gif)
+
+> **Note**: The various `force(sim)` functions will return the combined force on all of the bodies in a simulation! See [this example](https://https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TTwoD_MultipleBodies.jl) for a custom function to extract the forces on each geometry.
 
 #### Writing to a VTK file
 
