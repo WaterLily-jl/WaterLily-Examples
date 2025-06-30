@@ -1,6 +1,5 @@
-Manifest.toml
-
 .vscode/
 *.log
 *.gif
 !assets/*
+**/data/
