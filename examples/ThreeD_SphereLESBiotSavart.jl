@@ -1,4 +1,4 @@
-using Printf, StaticArrays, CUDA, JLD2, WaterLily, GLMakie, BiotSavartBCs
+using Printf, StaticArrays, CUDA, JLD2, WaterLily, BiotSavartBCs
 using WaterLily: dot, sgs!
 
 # Utils
@@ -30,7 +30,7 @@ recirculation_length(U) = findfirst(axes(U,1)) do i
     (U[i,m÷2,m÷2,1] < 0) && (U[i+1,m÷2,m÷2,1] > 10eps(eltype(U)))
 end |> i -> (i- m÷2)/2R
 
-function run_sim(p; m=3*2^p, R=m÷3, U=1, Re=3700, mem=CuArray, T=Float32, restart=nothing, restart_stats=nothing, restar_force=nothing)
+function run_sim(p; m=3*2^p, R=m÷3, U=1, Re=3700, mem=CuArray, T=Float32, restart=nothing, restart_stats=nothing, restart_force=nothing)
     sim = sphere(m; R, U, Re, T, mem)
     S = zeros(T, size(sim.flow.p)..., ndims(sim.flow.p), ndims(sim.flow.p)) |> mem # working array holding a tensor for each cell
     force, t = Vector{T}[] ,T[] # force coefficients, time
@@ -45,8 +45,8 @@ function run_sim(p; m=3*2^p, R=m÷3, U=1, Re=3700, mem=CuArray, T=Float32, resta
     if !isnothing(restart_stats)
         load!(meanflow; fname=restart_stats)
         println("Loaded: $restart_stats")
-        force, t = read_forces(restar_force)
-        println("Loaded: $restar_force")
+        force, t = read_forces(restart_force)
+        println("Loaded: $restart_force")
     end
 
     println("\nComputing mean flow statistics from: T=$(sim_time(sim))\n\
@@ -75,10 +75,10 @@ end
 mem = CuArray
 T = Float32
 Re = 3700
-time_max = 225 # in CTU
-stats_init = 75 # in CTU
+time_max = 300 # in CTU
+stats_init = 100 # in CTU
 stats_interval = 0.1 # in CTU
-save_interval = 25 # in CTU
+save_interval = 50 # in CTU
 
 p = !isnothing(iarg("p", ARGS)) ? arg_value("p", ARGS) |> metaparse : 4
 explicit_sgs = !isnothing(iarg("smag", ARGS)) ? arg_value("smag", ARGS) |> metaparse : true
@@ -118,12 +118,13 @@ function main(;load_time=nothing)
     end
 end
 
-sim, meanflow, force, t = main(load_time=200) # load_time=200
+sim, meanflow, force, t = main() # load_time=200
 println("▷ ΔT [CTU] = "*@sprintf("%.2f", WaterLily.time(meanflow)/2R*U))
 println("▷ CD_mean = "*@sprintf("%.2f", sum(force[2:end,1].*diff(t))/sum(diff(t))))
 println("▷ L/D = "*@sprintf("%.2f", recirculation_length(meanflow.U|>Array)))
 
 ## Visualization 3D
+# using GLMakie
 # viz!(sim) # 3D
 # viz!(sim; d=2) # 2D
 ## Run and visualize
