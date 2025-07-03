@@ -1,7 +1,7 @@
 using Printf, StaticArrays, CUDA, JLD2, WaterLily, BiotSavartBCs
 using WaterLily: dot, sgs!
 
-# Utils
+# utils for command line arguments
 iarg(arg) = occursin.(arg, ARGS) |> findfirst
 iarg(arg, args) = occursin.(arg, args) |> findfirst
 arg_value(arg) = split(ARGS[iarg(arg)], "=")[end]
@@ -123,26 +123,27 @@ println("▷ ΔT [CTU] = "*@sprintf("%.2f", WaterLily.time(meanflow)/2R*U))
 println("▷ CD_mean = "*@sprintf("%.2f", sum(force[2:end,1].*diff(t))/sum(diff(t))))
 println("▷ L/D = "*@sprintf("%.2f", recirculation_length(meanflow.U|>Array)))
 
-## Visualization 3D
-# using GLMakie
-# viz!(sim) # 3D
-# viz!(sim; d=2) # 2D
-## Run and visualize
-# S = zeros(T, size(sim.flow.p)..., ndims(sim.flow.p), ndims(sim.flow.p)) |> mem
-# viz!(sim;duration=10,remeasure=false,λ,udf,udf_kwargs=(:S=>S,:νₜ=>smagorinsky,:Cs=>0.17,:Δ=>Δ))
+## Visualization -------
+using GLMakie
+viz!(sim) # 3D
+viz!(sim; d=2) # 2D
+# Run and visualize
+S = zeros(T, size(sim.flow.p)..., ndims(sim.flow.p), ndims(sim.flow.p)) |> mem
+viz!(sim;duration=10,remeasure=false,λ,udf,udf_kwargs=(:S=>S,:νₜ=>smagorinsky,:Cs=>Cs,:Δ=>Δ))
 
-# sim_meanflow = deepcopy(sim)
-# WaterLily.copy!(sim_meanflow.flow,meanflow)
-# sim_meanflow.flow.μ₁ .= uu(meanflow)
-# function f(a, sim)
-#     b = sim.flow.σ
-#     @inside b[I] = sim.flow.u[I,1]
-#     copyto!(a,b[inside(b)])
-# end
-# function f2(a, sim)
-#     b = sim.flow.σ
-#     @inside b[I] = sim.flow.μ₁[I,1,1]
-#     copyto!(a,b[inside(b)])
-# end
-# # viz!(sim_meanflow;f=f2,d=2,clims=(0.00552,0.0554),threshhold=1e-5,levels=12)
-# viz!(sim_meanflow;d=2,levels=20)
+# Visualize the meanflow
+sim_meanflow = deepcopy(sim)
+WaterLily.copy!(sim_meanflow.flow,meanflow)
+sim_meanflow.flow.μ₁ .= uu(meanflow)
+function U_viz(a, sim)
+    b = sim.flow.σ
+    @inside b[I] = sim.flow.u[I,1]
+    copyto!(a,b[inside(b)])
+end
+function uu_viz(a, sim)
+    b = sim.flow.σ
+    @inside b[I] = sim.flow.μ₁[I,1,1]
+    copyto!(a,b[inside(b)])
+end
+viz!(sim_meanflow;f=U_viz,d=2,levels=20)
+viz!(sim_meanflow;f=uu_viz,d=2,clims=(0.00552,0.0554),threshhold=1e-5,levels=12) # same contour levels as Rodriguez et al. 2011 https://doi.org/10.1017/jfm.2011.136
