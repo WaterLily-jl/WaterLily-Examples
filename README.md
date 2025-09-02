@@ -41,6 +41,7 @@ Below we provide a list of all the examples available
 - [3D Taylor-Green vortex break down](examples/ThreeD_TaylorGreenVortex.jl)
 - [3D donut flow, using the GPU and Makie for live rendering](examples/ThreeD_Donut.jl)
 - [3D jellyfish, using the GPU and Makie for live rendering](examples/ThreeD_Jelly.jl)
+- [3D flow around the hover, extruded sdf and complex Write VTK](examples/ThreeD_HoverWriteVTK.jl)
 - [3D cylinder flow with vtk file save ad restart](examples/ThreeD_CylinderVTKRestart.jl)
 
 ### Detailed examples
@@ -252,7 +253,7 @@ using WaterLily,WriteVTK
 sim = make_sim(...)
 
 # make a writer
-writer = vtkwriter("simple_writer")
+writer = vtkWriter("simple_writer")
 
 # write the data
 write!(writer,sim)
@@ -260,24 +261,24 @@ write!(writer,sim)
 # don't forget to close the file
 close(writer)
 ```
-This would write the velocity and pressure fields to a file named `simmple_writer.pvd`. The `vtkwriter` function can also take a dictionary of custom attributes to write to the file. For example, the following code can be run to write the body signed-distance function and λ₂ fields to the file
+This would write the velocity and pressure fields to a file named `simple_writer.pvd`. The `vtkWriter` function can also take a dictionary of custom attributes to write to the file. For example, the following code can be run to write the body signed-distance function and λ₂ fields to the file
 ```julia
 using WaterLily,WriteVTK
 
 # make a writer with some attributes, need to output to CPU array to save file (|> Array)
-velocity(a::Simulation) = a.flow.u |> Array;
-pressure(a::Simulation) = a.flow.p |> Array;
-_body(a::Simulation) = (measure_sdf!(a.flow.σ, a.body, WaterLily.time(a));
-                                     a.flow.σ |> Array;)
-lamda(a::Simulation) = (@inside a.flow.σ[I] = WaterLily.λ₂(I, a.flow.u);
-                        a.flow.σ |> Array;)
+vtk_velocity(a::Simulation) = a.flow.u |> Array;
+vtk_pressure(a::Simulation) = a.flow.p |> Array;
+vtk_body(a::Simulation) = (measure_sdf!(a.flow.σ, a.body, WaterLily.time(a));
+                                        a.flow.σ |> Array;)
+vtk_lamda(a::Simulation) = (@inside a.flow.σ[I] = WaterLily.λ₂(I, a.flow.u);
+                            a.flow.σ |> Array;)
 
 # map field names to values in the file
 custom_attrib = Dict(
-    "Velocity" => velocity,
-    "Pressure" => pressure,
-    "Body" => _body,
-    "Lambda" => lamda
+    "Velocity" => vtk_velocity,
+    "Pressure" => vtk_pressure,
+    "Body" => vtk__body,
+    "Lambda" => vtk_lamda
 )
 
 # make the writer
@@ -290,7 +291,11 @@ The functions that are passed to the `attrib` (custom attributes) must follow th
 # prototype vtk writer function
 custom_vtk_function(a::Simulation) = ... |> Array
 ```
-where `...` should be replaced with the code that generates the field you want to write to the file. The piping to a (CPU) `Array` is necessary to ensure that the data is written to the CPU before being written to the file for GPU simulations.
+where `...` should be replaced with the code that generates the field you want to write to the file. The piping to a (CPU) `|> Array` is necessary to ensure that the data is written to the CPU before being written to the file for GPU simulations.
+
+> **_NOTE:_** 
+The `WriteVTK.jl` package requires components to come first when writing vector and tensor fields, but they are store with component last in `WaterLily`. For vector field, this permutation of dimensions is done automatically in the `write!` function ($V_{ijkα}→ V_{αijk}$). This is why you can simply pass `sim.flow.u |> Array` to the writer.
+For tensor fields, you will need to permute the dimensions __once__ yourself ($T_{ijkαβ}→ T_{βijkα}$) before writing to the file, the second permutation is done in the `write!` function ($T_{βijkα}→ T_{αβijk}$). This operation can be done simply as `permutedims(TensorField, (4,1,2,3))`.
 
 #### Restarting from a VTK file
 
