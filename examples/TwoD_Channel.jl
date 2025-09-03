@@ -3,37 +3,40 @@ using WaterLily,Plots
 # velocity magnitude
 mag(I,u) = √sum(ntuple(i->0.25*(u[I,i]+u[I+δ(i,I),i])^2,length(I)))
 
+import WaterLily: size_u,@loop,slice,CIj
 # import explicitly BC function and overwrite
 function BC_CH!(a,perdir=())
-    N,n = WaterLily.size_u(a)
+    N,n = size_u(a)
     for j ∈ 1:n, i ∈ 1:n
         if j in perdir
-            @WaterLily.loop a[I,i] = a[WaterLily.CIj(j,I,N[j]-1),i] over I ∈ WaterLily.slice(N,1,j)
-            @WaterLily.loop a[I,i] = a[WaterLily.CIj(j,I,2),i] over I ∈ WaterLily.slice(N,N[j],j)
+            @loop a[I,i] = a[CIj(j,I,N[j]-1),i] over I ∈ slice(N,1,j)
+            @loop a[I,i] = a[CIj(j,I,2),i] over I ∈ slice(N,N[j],j)
         else
             if i==1 && j==2 # u-velocity on top and bottom boundaries
-                @WaterLily.loop a[I,i] =  a[I-δ(j,I),i] over I ∈ WaterLily.slice(N,N[j],j) # d(ux)/dy = 0
-                @WaterLily.loop a[I,i] = -a[I+δ(j,I),i] over I ∈ WaterLily.slice(N,1,j)    # ux = 0 on bottom (no slip), must interpolate
+                @loop a[I,i] =  a[I-δ(j,I),i] over I ∈ slice(N,N[j],j) # d(ux)/dy = 0
+                @loop a[I,i] = -a[I+δ(j,I),i] over I ∈ slice(N,1,j)    # ux = 0 on bottom (no slip), must interpolate
             else # v-velocity on top and bottom boundaries
-                @WaterLily.loop a[I,i] = 0.0 over I ∈ WaterLily.slice(N,1,j)    # v = 0
-                @WaterLily.loop a[I,i] = 0.0 over I ∈ WaterLily.slice(N,N[j],j) # v = 0, no slip
+                @loop a[I,i] = 0.0 over I ∈ slice(N,1,j)    # v = 0
+                @loop a[I,i] = 0.0 over I ∈ slice(N,N[j],j) # v = 0, no slip
             end
         end
     end
 end
-@fastmath function WaterLily.mom_step!(a::Flow{N},b::AbstractPoisson;udf=nothing,kwargs...) where N
-    a.u⁰ .= a.u; WaterLily.scale_u!(a,0); t₁ = sum(a.Δt); t₀ = t₁ - a.Δt[end]
+import WaterLily: mom_step!,scale_u!,conv_diff!,quick,accelerate!,BDIM!,project!,CFL
+# overwrite the mom_step! function
+@fastmath function mom_step!(a::Flow{N},b::AbstractPoisson;udf=nothing,kwargs...) where N
+    a.u⁰ .= a.u; scale_u!(a,0); t₁ = sum(a.Δt); t₀ = t₁ - a.Δt[end]
     # predictor u → u'
-    WaterLily.conv_diff!(a.f,a.u⁰,a.σ,ν=a.ν,perdir=a.perdir)
-    WaterLily.accelerate!(a.f,t₀,a.g,a.U)
-    WaterLily.BDIM!(a); BC_CH!(a.u,a.perdir)
-    WaterLily.project!(a,b); BC_CH!(a.u,a.perdir)
+    conv_diff!(a.f,a.u⁰,a.σ,quick,ν=a.ν,perdir=a.perdir)
+    accelerate!(a.f,t₀,a.g,a.uBC)
+    BDIM!(a); BC_CH!(a.u,a.perdir)
+    project!(a,b); BC_CH!(a.u,a.perdir)
     # corrector u → u¹
-    WaterLily.conv_diff!(a.f,a.u,a.σ,ν=a.ν,perdir=a.perdir)
-    WaterLily.accelerate!(a.f,t₁,a.g,a.U)
-    WaterLily.BDIM!(a); WaterLily.scale_u!(a,0.5); BC_CH!(a.u,a.perdir)
-    WaterLily.project!(a,b,0.5); BC_CH!(a.u,a.perdir)
-    push!(a.Δt,WaterLily.CFL(a))
+    conv_diff!(a.f,a.u,a.σ,quick,ν=a.ν,perdir=a.perdir)
+    accelerate!(a.f,t₁,a.g,a.uBC)
+    BDIM!(a); scale_u!(a,0.5); BC_CH!(a.u,a.perdir)
+    project!(a,b,0.5); BC_CH!(a.u,a.perdir)
+    push!(a.Δt,CFL(a))
 end
 
 function channel(;L=2^6,U=1.0,Re=100,T=Float32,mem=Array)
@@ -42,7 +45,7 @@ function channel(;L=2^6,U=1.0,Re=100,T=Float32,mem=Array)
     g(i,x,t) = convert(typeof(t), i == 1 ? U^2/(L/2)^2 : 0)
 
     # make the simulations
-    sim = Simulation((4L,L),(0,0),L;U=U,ν=U*L/Re,g,perdir=(1,),T,mem)
+    Simulation((4L,L),(0,0),L;U=U,ν=U*L/Re,g,perdir=(1,),T,mem)
 end
 
 # using CUDA
@@ -66,8 +69,8 @@ duration = 50; step = 0.1
 end
 
 # plot the profile
-# plot(sim.flow.u[:,2:end,1]'./maximum(sim.flow.u[:,:,1]),collect(1:33)./33,
-#      label=:none,xlabel="u/U",ylabel="y/L")
-# # analytical solution laminar chanel flow u/U ~ C*(y/L)-(y/L)^2 ∀ y ∈ [0,L/2]
-# plot!(4*(collect(0:0.01:0.5).-collect(0:0.01:0.5).^2),2collect(0:0.01:0.5),label="analytical")
-# savefig("chanel_flow.png")
+plot(sim.flow.u[:,2:end,1]'./maximum(sim.flow.u[:,:,1]),collect(1:sim.L+1)./sim.L,
+     label=:none,xlabel="u/U",ylabel="y/L")
+# analytical solution laminar chanel flow u/U ~ C*(y/L)-(y/L)^2 ∀ y ∈ [0,L/2]
+plot!(4*(collect(0:0.01:0.5).-collect(0:0.01:0.5).^2),2collect(0:0.01:0.5),label="analytical")
+savefig("chanel_flow.png")
