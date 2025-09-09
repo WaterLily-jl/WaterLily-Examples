@@ -1,7 +1,7 @@
 using WaterLily,GLMakie
 
 function TGV(L; Re=1e5, U=1, T=Float32, mem=Array)
-    # Wavenumber
+    # wavenumber
     κ = T(π/L)
     # Taylor-Green-Vortex initial velocity field
     function uλ(i,xyz)
@@ -22,7 +22,7 @@ end
 
 # Initialize CUDA simulation
 # using CUDA
-sim = TGV(2^6)#mem=CUDA.CuArray);
+sim = TGV(2^6);#mem=CUDA.CuArray);
 t₀ = sim_time(sim)
 duration = 5.0
 step = 0.05

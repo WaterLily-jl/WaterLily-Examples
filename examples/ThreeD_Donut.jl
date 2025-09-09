@@ -18,7 +18,8 @@ end
 
 function ω_θ!(arr, sim)
     dt,a = sim.L/sim.U, sim.flow.σ
-    @inside a[I] = WaterLily.ω_θ(I,(1,0,0),SA[2sim.L,2sim.L,2sim.L],sim.flow.u)*dt
+    center = SA{eltype(sim.flow.σ)}[2sim.L,2sim.L,2sim.L]
+    @inside a[I] = WaterLily.ω_θ(I,(1,0,0),center,sim.flow.u)*dt
     copyto!(arr, a[inside(a)])
 end
 
@@ -29,4 +30,4 @@ t₀ = sim_time(sim)
 duration = 10.0
 step = 0.25
 
-viz!(sim;f=ω_θ!,duration,step,video="donut.mp4")
+viz!(sim;f=ω_θ!,duration,step,video="donut.mp4",algorithm=:iso,isovalue=0.5)

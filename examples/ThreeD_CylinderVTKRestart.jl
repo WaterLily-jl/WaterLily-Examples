@@ -15,14 +15,14 @@ end
 # make a simulation on the CPU
 sim = circle();
 # make a vtk writer
-wr = vtkWriter("TwoD_circle_vtk_restart")
+wr = vtkWriter("ThreeD_circle_vtk_restart")
 # sim for a bit, write and close
 sim_step!(sim,1);  save!(wr, sim); close(wr)
 
 # re-start the sim from a paraview file but on the GPU this time
 # using CUDA
 restart = circle()#;mem=CUDA.CuArray);
-wr2 = load!(restart; fname="TwoD_circle_vtk_restart.pvd")
+wr2 = load!(restart; fname="ThreeD_circle_vtk_restart.pvd")
 
 # intialize
 t₀ = sim_time(restart); duration = 10; tstep = 0.1
