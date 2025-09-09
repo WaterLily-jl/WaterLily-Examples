@@ -337,14 +337,14 @@ In WaterLily we use a [staggered grid](https://tum-pbs.github.io/PhiFlow/Stagger
 
 If you have used `WaterLily.jl` for research, please __cite us__! The following manuscript describes the main features of the solver and provides benchmarking, validation, and profiling results.
 ```
-@misc{WeymouthFont2024,
-    title         = {WaterLily.jl: A differentiable and backend-agnostic Julia solver to simulate incompressible viscous flow and dynamic bodies},
-    author        = {Gabriel D. Weymouth and Bernat Font},
-    url           = {https://arxiv.org/abs/2407.16032},
-    eprint        = {2407.16032},
-    archivePrefix = {arXiv},
-    year          = {2024},
-    primaryClass  = {physics.flu-dyn}
+@article{WeymouthFont2025,
+    author = {G.D. Weymouth and B. Font},
+    title = {WaterLily.jl: A differentiable and backend-agnostic Julia solver for incompressible viscous flow around dynamic bodies},
+    doi = {10.1016/j.cpc.2025.109748},
+    journal = {Computer Physics Communications},
+    year = {2025},
+    volume = {315},
+    pages = {109748},
 }
 ```
 
