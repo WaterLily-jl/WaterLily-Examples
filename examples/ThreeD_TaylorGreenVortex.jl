@@ -1,4 +1,4 @@
-using WaterLily
+using WaterLily,GLMakie
 
 function TGV(L; Re=1e5, U=1, T=Float32, mem=Array)
     # Wavenumber

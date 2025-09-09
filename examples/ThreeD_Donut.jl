@@ -1,4 +1,4 @@
-using WaterLily,StaticArrays
+using WaterLily,StaticArrays,GLMakie
 
 function donut(L;Re=1e3,mem=Array,U=1)
     # Define simulation size, geometry dimensions, viscosity
@@ -23,8 +23,8 @@ function ω_θ!(arr, sim)
 end
 
 # make sim and run
-using CUDA
-sim = donut(2^5;mem=CUDA.CuArray);
+# using CUDA
+sim = donut(2^5)#;mem=CUDA.CuArray);
 t₀ = sim_time(sim)
 duration = 10.0
 step = 0.25
