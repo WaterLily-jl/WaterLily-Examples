@@ -1,5 +1,0 @@
-#!/bin/bash
-set -e # exit on first error
-for i in ./*.jl;
-    do echo "Running $i"; julia --project=../Project.toml "$i";
-done

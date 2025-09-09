@@ -1,9 +1,11 @@
 using WaterLily,StaticArrays,Plots
 
+# helper
 norm(x) = √sum(abs2,x)
+
 function make_sim(;L=2^5,U=1,Re=250,mem=Array)
 
-    # triangle sdf    
+    # triangle sdf
     function triangle(p,t)
         r,k = L/2,sqrt(3.0)
         x = abs(p[1]) - r

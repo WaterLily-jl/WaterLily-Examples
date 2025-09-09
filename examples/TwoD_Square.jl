@@ -11,9 +11,9 @@ function make_sim(;L=2^5,U=1,Re=250,mem=Array)
     map(x,t) = x-SA[2L,2L]
 
     # square is intersection of four planes
-    body = AutoBody((x,t)->plane(x,t,SA[-L/2,0],SA[-1, 0]),map) ∩ 
-           AutoBody((x,t)->plane(x,t,SA[ 0,L/2],SA[ 0, 1]),map) ∩ 
-           AutoBody((x,t)->plane(x,t,SA[L/2, 0],SA[ 1, 0]),map) ∩ 
+    body = AutoBody((x,t)->plane(x,t,SA[-L/2,0],SA[-1, 0]),map) ∩
+           AutoBody((x,t)->plane(x,t,SA[ 0,L/2],SA[ 0, 1]),map) ∩
+           AutoBody((x,t)->plane(x,t,SA[L/2, 0],SA[ 1, 0]),map) ∩
            AutoBody((x,t)->plane(x,t,SA[0,-L/2],SA[ 0,-1]),map)
 
     # make a simulation

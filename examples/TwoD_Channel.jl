@@ -50,7 +50,7 @@ end
 
 # using CUDA
 # make the sim
-sim = channel(L=2^7)#;mem=CUDA.CuArray
+sim = channel(L=2^7)#;mem=CUDA.CuArray)
 
 # get start time
 duration = 50; step = 0.1
@@ -69,7 +69,8 @@ duration = 50; step = 0.1
 end
 
 # plot the profile
-plot(sim.flow.u[:,2:end,1]'./maximum(sim.flow.u[:,:,1]),collect(1:sim.L+1)./sim.L,
+u_num = sim.flow.u[:,2:end,1]'./maximum(sim.flow.u[:,:,1])|>Array
+plot(u_num,collect(1:sim.L+1)./sim.L,
      label=:none,xlabel="u/U",ylabel="y/L")
 # analytical solution laminar chanel flow u/U ~ C*(y/L)-(y/L)^2 ∀ y ∈ [0,L/2]
 plot!(4*(collect(0:0.01:0.5).-collect(0:0.01:0.5).^2),2collect(0:0.01:0.5),label="analytical")

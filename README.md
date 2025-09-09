@@ -273,7 +273,7 @@ Internally, this function reads the last file in the `.pvd` file and use that to
 
 Sometimes, it might be useful to overwrite the default functions used in the simulation. For example, the `BC!` function can be overwritten to implement a custom boundary condition, see [this example](examples/TwoD_LidCavity.jl). For example, to overwrite the `mom_step!` function, you will need something like this
 ```julia
-function WaterLily.mom_step!(a::Flow{N},b::AbstractPoisson) where N
+@fastmath function mom_step!(a::Flow{N},b::AbstractPoisson;udf=nothing,kwargs...) where N
     ...do your thing...
 end
 ```

@@ -22,7 +22,7 @@ function BC_lid!(a)
 end
 import WaterLily: mom_step!,scale_u!,conv_diff!,quick,BDIM!,project!,CFL
 # overwrite the mom_step! function
-@fastmath function mom_step!(a::Flow{N},b::AbstractPoisson) where N
+@fastmath function mom_step!(a::Flow{N},b::AbstractPoisson;udf=nothing,kwargs...) where N
     a.u⁰ .= a.u; scale_u!(a,0)
     # predictor u → u'
     conv_diff!(a.f,a.u⁰,a.σ,quick,ν=a.ν,perdir=a.perdir)
