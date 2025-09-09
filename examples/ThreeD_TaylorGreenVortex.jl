@@ -1,30 +1,30 @@
 using WaterLily
-function TGV(; pow=6, Re=1e5, T=Float32, mem=Array)
-    # Define vortex size, velocity, viscosity
-    L = 2^pow; U = 1; ν = U*L/Re
+
+function TGV(L; Re=1e5, U=1, T=Float32, mem=Array)
+    # Wavenumber
+    κ = T(π/L)
     # Taylor-Green-Vortex initial velocity field
     function uλ(i,xyz)
-        x,y,z = @. (xyz-1.5)*π/L                # scaled coordinates
+        x,y,z = @. (xyz-1.5f0)*κ               # scaled coordinates
         i==1 && return -U*sin(x)*cos(y)*cos(z) # u_x
         i==2 && return  U*cos(x)*sin(y)*cos(z) # u_y
-        return 0.                              # u_z
+        return 0.f0                            # u_z
     end
     # Initialize simulation
-    return Simulation((L, L, L), (0, 0, 0), L; U, uλ, ν, T, mem)
+    return Simulation((L, L, L), (0, 0, 0), L; U, uλ, ν = U*L/Re, T, mem)
+end
+
+function λ₂!(arr, sim)                          # compute log10(-λ₂)
+    a = sim.flow.σ
+    @inside a[I] = log10(max(1e-6,-WaterLily.λ₂(I,sim.flow.u)*sim.L/sim.U))
+    copyto!(arr ,a[inside(a)])                  # copy to CPU
 end
 
 # Initialize CUDA simulation
 # using CUDA
-sim = TGV()#mem=CUDA.CuArray);
+sim = TGV(2^6)#mem=CUDA.CuArray);
+t₀ = sim_time(sim)
+duration = 5.0
+step = 0.05
 
-# Create a video using Makie
-dat = sim.flow.σ[inside(sim.flow.σ)] |> Array; # CPU buffer array
-function λ₂!(dat,sim)                          # compute log10(-λ₂)
-    a = sim.flow.σ
-    @inside a[I] = log10(max(1e-6,-WaterLily.λ₂(I,sim.flow.u)*sim.L/sim.U))
-    copyto!(dat,a[inside(a)])                  # copy to CPU
-end
-include("../src/ThreeD_plots.jl")
-@time makie_video!(sim,dat,λ₂!,name="TGV.mp4",duration=5) do obs
-    contour(obs,levels=[-3,-2,-1,0],alpha=0.1)
-end
+viz!(sim;f=λ₂!,duration,step,video="TGV.mp4")
