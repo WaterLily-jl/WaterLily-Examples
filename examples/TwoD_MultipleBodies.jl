@@ -1,27 +1,26 @@
 using WaterLily,StaticArrays,Plots
 
 function circle(n,m;Re=550,U=1,mem=Array,T=Float32)
-    R, x0 = m/18, m/2+1
-    bodies = AutoBody[]
-    # random position x,y ∈ [-2.5,2.5] and circle diamater r ∈ [0.75,1.5]
-    for (center,radius) ∈ zip(eachrow(5rand(6,2).-2.5),0.75rand(6).+0.75)
-        push!(bodies,AutoBody((x,t)->√sum(abs2, x .- x0 .- 2center.*R) - radius*R))
+    R, x0 = m÷18, m÷2
+    # 6 circles with random centers x,y ∈ [5,5] and radius r ∈ [0.75,1.5]
+    body = sum(1:6) do _
+        center,radius = 10rand(SVector{2,T}) .- 5, (3rand(T) + 3)/4
+        AutoBody((x,t)->√sum(abs2, x .- x0 - center*R) - radius*R)
     end
-    # combine into one body
-    body = Bodies(bodies, repeat([+],length(bodies)-1))
     # make a simulation
     Simulation((n,m), (U,0), R; ν=U*R/Re, body, mem, T)
 end
 
 # make a simulation and run it
 # using CUDA
-sim = circle(3*2^7,2^8)#,mem=CUDA.CuArray)
-sim_gif!(sim,duration=10,clims=(-5,5),plotbody=true)
+sim = circle(3*2^7,2^8);#mem=CUDA.CuArray);
+sim_gif!(sim,duration=30,clims=(-5,5),remeasure=false,plotbody=true,axis=([], false),
+         cfill=:seismic,legend=false,border=:none)
 
-# get force on first body
-f1 = WaterLily.pressure_force(sim.flow,sim.body.bodies[1])
-flood(sim.flow.f[:,:,1]|>Array,clims=(-1,1)) # check that this is only non-zero near the first body
+# get net force on all bodies
+f_total = WaterLily.pressure_force(sim)
 
-# force on the second
-f2 = WaterLily.pressure_force(sim.flow,sim.body.bodies[2])
-flood(sim.flow.f[:,:,1]|>Array,clims=(-1,1)) # check that this is only non-zero near the first body
+# force on _each_ body
+each_force(flow,body) = WaterLily.pressure_force(flow,body)
+each_force(flow,body::WaterLily.SetBody{typeof(min)}) = mapreduce(bod->each_force(flow,bod),hcat,(body.a,body.b))
+each_force(sim.flow,sim.body)
