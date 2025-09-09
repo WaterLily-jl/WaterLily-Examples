@@ -1,4 +1,6 @@
-using Printf, StaticArrays, CUDA, JLD2, WaterLily, BiotSavartBCs
+using Printf, StaticArrays, CUDA, JLD2, WaterLily, Pkg
+Pkg.add(url="https://github.com/weymouth/BiotSavartBCs.jl")
+using BiotSavartBCs
 using WaterLily: dot, sgs!
 
 # utils for command line arguments
