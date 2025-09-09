@@ -3,33 +3,36 @@ using WaterLily,Plots
 # velocity magnitude
 mag(I,u) = √sum(ntuple(i->0.25*(u[I,i]+u[I+δ(i,I),i])^2,length(I)))
 
+import WaterLily: size_u,@loop,slice
 # import explicitly BC function and overwrite
 function BC_lid!(a)
     N,n = WaterLily.size_u(a)
     for j ∈ 1:n, i ∈ 1:n
         if i==1 && j==2 # lid, Dirichlet cannot be imposed, must interpolate u[i,j+1,1]+u[i,j]/2 = uBC
-            @WaterLily.loop a[I,i] = 2.00-a[I-δ(j,I),i] over I ∈ WaterLily.slice(N,N[j],j)
-            @WaterLily.loop a[I,i] = -a[I+δ(j,I),i] over I ∈ WaterLily.slice(N,1,j)
+            @loop a[I,i] = 2.00-a[I-δ(j,I),i] over I ∈ slice(N,N[j],j)
+            @loop a[I,i] = -a[I+δ(j,I),i] over I ∈ slice(N,1,j)
         elseif i==j # Normal direction, homoheneous Dirichlet
-            @WaterLily.loop a[I,i] = 0.0 over I ∈ WaterLily.slice(N,1,j)
-            @WaterLily.loop a[I,i] = 0.0 over I ∈ WaterLily.slice(N,N[j],j)
+            @loop a[I,i] = 0.0 over I ∈ slice(N,1,j)
+            @loop a[I,i] = 0.0 over I ∈ slice(N,N[j],j)
         else  # Tangential directions, interpolate ghost cell to homogeneous Dirichlet
-            @WaterLily.loop a[I,i] = -a[I+δ(j,I),i] over I ∈ WaterLily.slice(N,1,j)
-            @WaterLily.loop a[I,i] = -a[I-δ(j,I),i] over I ∈ WaterLily.slice(N,N[j],j)
+            @loop a[I,i] = -a[I+δ(j,I),i] over I ∈ slice(N,1,j)
+            @loop a[I,i] = -a[I-δ(j,I),i] over I ∈ slice(N,N[j],j)
         end
     end
 end
-@fastmath function WaterLily.mom_step!(a::Flow{N},b::AbstractPoisson) where N
-    a.u⁰ .= a.u; WaterLily.scale_u!(a,0)
+import WaterLily: mom_step!,scale_u!,conv_diff!,quick,BDIM!,project!,CFL
+# overwrite the mom_step! function
+@fastmath function mom_step!(a::Flow{N},b::AbstractPoisson) where N
+    a.u⁰ .= a.u; scale_u!(a,0)
     # predictor u → u'
-    WaterLily.conv_diff!(a.f,a.u⁰,a.σ,ν=a.ν,perdir=a.perdir)
-    WaterLily.BDIM!(a); BC_lid!(a.u)
-    WaterLily.project!(a,b); BC_lid!(a.u)
+    conv_diff!(a.f,a.u⁰,a.σ,quick,ν=a.ν,perdir=a.perdir)
+    BDIM!(a); BC_lid!(a.u)
+    project!(a,b); BC_lid!(a.u)
     # corrector u → u¹
-    WaterLily.conv_diff!(a.f,a.u,a.σ,ν=a.ν,perdir=a.perdir)
-    WaterLily.BDIM!(a); WaterLily.scale_u!(a,0.5); BC_lid!(a.u)
-    WaterLily.project!(a,b,0.5); BC_lid!(a.u)
-    push!(a.Δt,WaterLily.CFL(a))
+    conv_diff!(a.f,a.u,a.σ,quick,ν=a.ν,perdir=a.perdir)
+    BDIM!(a); scale_u!(a,0.5); BC_lid!(a.u)
+    project!(a,b,0.5); BC_lid!(a.u)
+    push!(a.Δt,CFL(a))
 end
 
 function Lid_cavity(;L=2^6,U=1.0,Re=100,T=Float32,mem=Array)
