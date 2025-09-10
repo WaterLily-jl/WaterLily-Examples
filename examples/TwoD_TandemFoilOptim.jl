@@ -60,7 +60,7 @@ function Δimpulse!(sim)
 end
 
 function mean_drag(φ,two=true,St=0.3,N=3,period=2N/St)
-    println("Testing φ=$(round(φ,digits=3))")
+    println("Testing φ=$(φ)")
     sim = make_foils(φ;two,St)
     sim_step!(sim,period) # warm-in transient period
     impulse = 0           # integrate impulse

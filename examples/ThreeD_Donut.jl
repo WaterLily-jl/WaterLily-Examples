@@ -30,4 +30,4 @@ t₀ = sim_time(sim)
 duration = 10.0
 step = 0.25
 
-viz!(sim;f=ω_θ!,duration,step,video="donut.mp4",algorithm=:iso,isovalue=0.5)
+viz!(sim;f=ω_θ!,duration,step,video="donut.mp4",algorithm=:iso,isovalue=0.5) # remove video="donut.mp4" for co-visualization during runtime

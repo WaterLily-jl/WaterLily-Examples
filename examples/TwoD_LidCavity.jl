@@ -1,4 +1,4 @@
-using WaterLily,Plots
+using WaterLily,GLMakie
 
 # velocity magnitude
 mag(I,u) = √sum(ntuple(i->0.25*(u[I,i]+u[I+δ(i,I),i])^2,length(I)))
@@ -41,21 +41,30 @@ function Lid_cavity(;L=2^6,U=1.0,Re=100,T=Float32,mem=Array)
 end
 
 # using CUDA
-sim = Lid_cavity(L=2^7)#,mem=CuArray)
+sim = Lid_cavity(L=2^6)#,mem=CuArray)
 
 # get start time
-t₀ = round(sim_time(sim))
-duration = 20; step = 0.1
-
-@gif for tᵢ in range(t₀,t₀+duration;step)
-
-    # update until time tᵢ in the background
-    sim_step!(sim,tᵢ)
-
-    # flood plot
-    @inside sim.flow.σ[I] = mag(I,sim.flow.u)
-    flood(sim.flow.σ|>Array; shift=(-0.5,-0.5),clims=(0,1))
-
-    # print time step
-    println("tU/L=",round(tᵢ,digits=4),", Δt=",round(sim.flow.Δt[end],digits=3))
+function umag(arr, sim)
+    a = sim.flow.σ
+    @inside a[I] = mag(I,sim.flow.u)
+    copyto!(arr ,a[inside(a)])
 end
+
+duration, step = 20, 0.1
+viz!(sim; f=umag, duration, step, clims=(0,1), levels=20) # add: video="lid.mp4" to store the video
+
+## Alternative visualization with Plots
+# using Plots
+# t₀ = round(sim_time(sim))
+# @gif for tᵢ in range(t₀,t₀+duration;step)
+
+#     # update until time tᵢ in the background
+#     sim_step!(sim,tᵢ)
+
+#     # flood plot
+#     @inside sim.flow.σ[I] = mag(I,sim.flow.u)
+#     flood(sim.flow.σ|>Array; shift=(-0.5,-0.5),clims=(0,1))
+
+#     # print time step
+#     println("tU/L=",round(tᵢ,digits=4),", Δt=",round(sim.flow.Δt[end],digits=3))
+# end

@@ -16,7 +16,7 @@ end
 
 # using CUDA
 # make the sim
-sim = hover(64)#;mem=CUDA.CuArray)
+sim = hover(64)#;mem=CuArray)
 
 # we know have to define these functions, for example:
 vtk_velocity(a::AbstractSimulation) = a.flow.u |> Array

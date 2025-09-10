@@ -21,5 +21,5 @@ function make_sim(;L=2^5,U=1,Re=250,mem=Array)
 end
 # using CUDA
 # intialize and run
-sim = make_sim()#;mem=CUDA.CuArray)
+sim = make_sim()#;mem=CuArray)
 sim_gif!(sim,duration=10,clims=(-10,10),plotbody=true)

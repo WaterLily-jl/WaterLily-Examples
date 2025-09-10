@@ -34,8 +34,8 @@ let
     # motion definition
     # map(x,t) = x - SA[posx(t), 0]
 
-    # mₐke a body
-    circle = AutoBody((x,t)->√sum(abs2, x .- center) - radius, map=Mapping(p0))
+    # make a body
+    circle = AutoBody((x,t)->√sum(abs2, x .- center) - radius, Mapping(p0))
 
     # generate sim
     sim = Simulation((6L,4L), (U,0), radius; ν=U*radius/Re, body=circle)

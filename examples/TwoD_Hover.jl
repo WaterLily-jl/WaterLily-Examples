@@ -15,10 +15,10 @@ function hover(L=2^6;Re=250,U=1,amp=π/4,ϵ=0.5,thk=2ϵ+√2,mem=Array)
 end
 
 # using CUDA
-sim = hover()#mem=CUDA.CuArray)
+sim = hover()#mem=CuArray)
 sim_step!(sim,π)
 
-@time @gif for tᵢ in range(0.,stop;step=0.1)
+@time @gif for tᵢ in range(0,10;step=0.1)
     println("tU/L=",round(tᵢ,digits=4))
     sim_step!(sim,tᵢ)
     @inside sim.flow.σ[I] = WaterLily.curl(3,I,sim.flow.u)*sim.L/sim.U

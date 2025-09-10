@@ -21,7 +21,7 @@ sim_step!(sim,1);  save!(wr, sim); close(wr)
 
 # re-start the sim from a paraview file but on the GPU this time
 # using CUDA
-restart = circle()#;mem=CUDA.CuArray);
+restart = circle()#;mem=CuArray);
 wr2 = load!(restart; fname="ThreeD_circle_vtk_restart.pvd")
 
 # intialize
