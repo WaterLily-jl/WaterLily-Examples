@@ -37,7 +37,7 @@ run(sim_time(sim) + 20)
 # Visualise mean flow (not yet converged in time!)
 ω_mean = zeros(size(meanflow.P))|>CuArray
 @inside ω_mean[I] = WaterLily.curl(3,I,meanflow.U)
-viz!(sim, ω_mean; clims=(-0.2,0.2), levels=60) # the mean flow should look better now
+viz!(sim, ω_mean; clims=(-0.2,0.2), levels=60)
 
 # Create a new simulation and restore from last saved snapshot
 sim2 = circle(3*2^6, 2^7; mem=CuArray)
