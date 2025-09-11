@@ -7,4 +7,5 @@ Manifest.toml
 *.pvd
 vtk_data/
 *.png
+*.jld2
 !assets/*

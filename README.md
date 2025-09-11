@@ -74,28 +74,27 @@ A set of [flow metric functions](https://github.com/WaterLily-jl/WaterLily.jl/bl
 #### 3D Taylor Green Vortex
 The three-dimensional [Taylor Green Vortex](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/ThreeD_TaylorGreenVortex.jl) demonstrates many of the other available simulation options. First, you can simulate a non-trivial initial velocity field by passing in a vector function `uλ(i,xyz)` where `i ∈ (1,2,3)` indicates the velocity component `uᵢ` and `xyz=[x,y,z]` is the position vector.
 ```julia
-function TGV(; pow=6, Re=1e5, T=Float64, mem=Array)
-    # Define vortex size, velocity, viscosity
-    L = 2^pow; U = 1; ν = U*L/Re
+function TGV(L; Re=1600, U=1, T=Float32, mem=Array)
+    # wavenumber, velocity
+    κ, U = T(π/L), T(U)
     # Taylor-Green-Vortex initial velocity field
     function uλ(i,xyz)
-        x,y,z = @. (xyz-1.5)*π/L               # scaled coordinates
+        x,y,z = @. xyz*κ                       # scaled coordinates
         i==1 && return -U*sin(x)*cos(y)*cos(z) # u_x
         i==2 && return  U*cos(x)*sin(y)*cos(z) # u_y
-        return 0.                              # u_z
+        return zero(U)                         # u_z
     end
     # Initialize simulation
-    return Simulation((L, L, L), (0, 0, 0), L; U, uλ, ν, T, mem)
+    return Simulation((L, L, L), (0, 0, 0), L; U, uλ, ν = U*L/Re, T, mem)
 end
 ```
-This example also demonstrates the floating point type (`T=Float64`) and array memory type (`mem=Array`) options. For example, to run on an NVIDIA GPU we only need to import the [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) library and initialize the `Simulation` memory on that device.
+This example also demonstrates the floating point type (`T=Float32`) and array memory type (`mem=Array`) options. For example, to run on an NVIDIA GPU we only need to import the [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) library and initialize the `Simulation` memory on that device.
 ```julia
-import CUDA
-@assert CUDA.functional()
-vortex = TGV(T=Float32,mem=CUDA.CuArray)
-sim_step!(vortex,1)
+using CUDA
+vortex = TGV(2^6; T=Float32, mem=CuArray)
+sim_step!(vortex, 1)
 ```
-For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`.
+For an AMD GPU, use `using AMDGPU` and `mem=ROCArray`.
 > **_NOTE:_** Julia 1.9 is required for AMD GPUs.
 
 #### Moving bodies
@@ -105,7 +104,7 @@ For an AMD GPU, use `import AMDGPU` and `mem=AMDGPU.ROCArray`.
 You can simulate moving bodies in WaterLily by passing a coordinate `map` to `AutoBody` in addition to the `sdf`.
 ```julia
 using StaticArrays
-function hover(L=2^5;Re=250,U=1,amp=π/4,ϵ=0.5,thk=2ϵ+√2)
+function hover(L=2^6;Re=250,U=1,amp=π/4,ϵ=0.5,thk=2ϵ+√2,mem=Array)
     # Line segment SDF
     function sdf(x,t)
         y = x .- SA[0,clamp(x[2],-L/2,L/2)]
@@ -116,7 +115,7 @@ function hover(L=2^5;Re=250,U=1,amp=π/4,ϵ=0.5,thk=2ϵ+√2)
         α = amp*cos(t*U/L); R = SA[cos(α) sin(α); -sin(α) cos(α)]
         R * (x - SA[3L-L*sin(t*U/L),4L])
     end
-    Simulation((6L,6L),(0,0),L;U,ν=U*L/Re,body=AutoBody(sdf,map),ϵ)
+    Simulation((6L,6L),(0,0),L;U,ν=U*L/Re,body=AutoBody(sdf,map),ϵ,mem)
 end
 ```
 [In this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_Hover.jl), the `sdf` function defines a line segment from `-L/2 ≤ x[2] ≤ L/2` with a thickness `thk`. To make the line segment move, we define a coordinate transformation function `map(x,t)`. In this example, the coordinate `x` is shifted by `(3L,4L)` at time `t=0`, which moves the center of the segment to this point. However, the horizontal shift varies harmonically in time, sweeping the segment left and right during the simulation. The example also rotates the segment using the rotation matrix `R = [cos(α) sin(α); -sin(α) cos(α)]` where the angle `α` is also varied harmonically. The combined result is a thin flapping line, similar to a cross-section of a hovering insect wing.
@@ -129,15 +128,15 @@ One important thing to note here is the use of `StaticArrays` to define the `sdf
 
 This [example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_OscillatingFlowOverCircle.jl) demonstrates a 2D oscillating periodic flow over a circle.
 ```julia
-function circle(n,m;Re=250,U=1)
+function circle(n,m;κ=1.5,Re=250,U=1,T=Float32,mem=Array)
     # define a circle at the domain center
-    radius = m/8
+    radius = T(m/8)
     body = AutoBody((x,t)->√sum(abs2, x .- (n/2,m/2)) - radius)
 
     # define time-varying body force `g` and periodic direction `perdir`
-    accelScale, timeScale = U^2/2radius, radius/U
-    g(i,x,t) = i==1 ? -2accelScale*sin(t/timeScale) : 0
-    Simulation((n,m), (U,0), radius; ν=U*radius/Re, body, g, perdir=(1,))
+    accelScale, timeScale = T(U^2/2radius), T(κ*radius/U)
+    g(i,x,t::T) where {T} = i==1 ? -2accelScale*sin(t/timeScale) : zero(T)
+    Simulation((n,m), (U,zero(T)), radius; ν=U*radius/Re, body, g, perdir=(1,), T, mem)
 end
 ```
 The `g` argument accepts a function with direction (`i`) and time (`t`) arguments. This allows you to create a spatially uniform body force with variations over time. In this example, the function adds a sinusoidal force in the "x" direction `i=1`, and nothing to the other directions.
@@ -163,7 +162,7 @@ The `Ut` function is used to define the time-varying velocity field. In this exa
 
 ![periodic flow](assets/periodic.gif)
 
-In addition to the standard free-slip (or reflective) boundary conditions, WaterLily also supports periodic boundary conditions, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_circle_periodicBC_convectiveBC.jl). For instance, to set up a `Simulation` with periodic boundary conditions in the "y" direction the `perdir=(2,)` keyword argument should be passed
+In addition to the standard free-slip (or reflective) boundary conditions, WaterLily also supports periodic boundary conditions, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_CirclePeriodicBC.jl). For instance, to set up a `Simulation` with periodic boundary conditions in the "y" direction the `perdir=(2,)` keyword argument should be passed
 ```julia
 using WaterLily,StaticArrays
 
@@ -207,9 +206,9 @@ function plane(x,t,center,normal)
     sum((x .- center).*normal)
 end
 # square is intersection of four planes
-body = AutoBody((x,t)->plane(x,t,SA[-L/2,0],SA[-1, 0])) ∩ 
-       AutoBody((x,t)->plane(x,t,SA[ 0,L/2],SA[ 0, 1])) ∩ 
-       AutoBody((x,t)->plane(x,t,SA[L/2, 0],SA[ 1, 0])) ∩ 
+body = AutoBody((x,t)->plane(x,t,SA[-L/2,0],SA[-1, 0])) ∩
+       AutoBody((x,t)->plane(x,t,SA[ 0,L/2],SA[ 0, 1])) ∩
+       AutoBody((x,t)->plane(x,t,SA[L/2, 0],SA[ 1, 0])) ∩
        AutoBody((x,t)->plane(x,t,SA[0,-L/2],SA[ 0,-1]))
 ```
 where `∩` (`\cap<tab>`) is the [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)) operation. We can also take the [union](https://en.wikipedia.org/wiki/Union_(set_theory)) of shapes using `∪` (`\cup<tab>`) or `+`. Since `sum(iter)` is simply iterated addition, we can use this to easily combine a number of bodies together, as demonstrated in [this multiple circles example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/main/examples/TwoD_MultipleBodies.jl)
@@ -221,16 +220,16 @@ end
 ```
 which adds together 6 circles with random center and radius, as shown in the gif above.
 
-As this method work for any `AbstractBody`, it will also work for body generated using the sister package [ParametricBodies.jl](https://github.com/WaterLily-jl/ParametricBodies.jl).
+This method works for any `AbstractBody`, and it also works for bodies generated using the sister package [ParametricBodies.jl](https://github.com/WaterLily-jl/ParametricBodies.jl).
 ```julia
-function circle_and_foil(L;Re=550,U=1,mem=Array,T=Float32)
+function circle_and_foil(L=2^6;Re=550,U=1,mem=CUDA.CuArray,T=Float32)
     # A moving circle using AutoBody
     circle = AutoBody((x,t)->√sum(abs2,x)-L÷2, (x,t)->x-SA[L+U*t,3L÷2-10])
 
-    # A foil defined by the difference between an upper and lower surface
-    upper = ParametricBody(BSplineCurve(SA[5L 4L 3L 3L; 2L 5L÷2 5L÷2 2L],degree=3;T))
-    lower = ParametricBody(BSplineCurve(SA[5L 3L; 2L 2L],degree=1;T))
-    foil = upper-lower
+    # A foil defined by the intersection of the upper and lower surface
+    upper = ParametricBody(BSplineCurve(SA{T}[5L 4L 3L 3L; 2L 5L÷2 5L÷2 2L],degree=3))
+    lower = ParametricBody(BSplineCurve(SA{T}[3L 5L; 2L 2L],degree=1))
+    foil = upper ∩ lower
 
     # Simulate the flow past the two general bodies
     Simulation((10L,4L), (U,0), L; ν=U*L/Re, body=foil+circle, mem, T)
@@ -240,7 +239,7 @@ end
 
 ![Multiple AbstractBody](assets/MultipleAbstractBodies.gif)
 
-> **Note**: The various `force(sim)` functions will return the combined force on all of the bodies in a simulation! See the two examples above for ideas to extract the forces on one or all geometries in a simulation.
+> **Note**: The `total_force(sim)`, `pressure_force(sim)`, `viscous_force(sim)` functions will return the **combined force on all of the bodies** in a simulation! See the two examples above for ideas to extract the forces on one or all geometries in a simulation.
 
 #### Writing to a VTK file
 
@@ -317,6 +316,47 @@ close(writer)
 ```
 Internally, this function reads the last file in the `.pvd` file and use that to set the `velocity` and `pressure` fields in the simulation. The `sim_time` is also set to the last value saved in the `.pvd` file. The function also returns a `vtkwriter` that will append the new data to the file used to restart the simulation.
 > **_NOTE:_** The simulation object `sim` that will be filled must be identical to the one saved to the file for this restart to work, that is, the same size, same body, etc.
+
+#### Restarting from a JLD2 binary file
+
+Restarts can also be performed through [JLD2](https://github.com/JuliaIO/JLD2.jl) (HDF5 compatible) binary files. For example
+```julia
+function circle(n, m; Re=250, U=1, mem=Array, T=Float32)
+    radius, center = m/8, m/2
+    body = AutoBody((x,t)->√sum(abs2, x .- center) - radius)
+    Simulation((n,m), (U,0), radius; ν=U*radius/Re, body, mem, T)
+end
+
+sim = circle(3*2^6, 2^7; mem=CuArray)
+sim_step!(sim, 20)
+save!("circle.jld2", sim)
+
+sim2 = circle(3*2^6, 2^7; mem=CuArray)
+load!(sim2; fname="circle.jld2")
+```
+will save the `circle` simulation in the `circle.jld2` file, which can then be restored with the `load!` function. Now `sim` and `sim2` will contain the same body and flow fields. Check the [TwoD_MeanCircleJLD2.jl](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_MeanCircleJLD2.jl) example for more details.
+
+#### Computing mean flow metrics
+
+Computing mean flow statistics (time-averaged velocity, pressure, and velocity fluctuations) is done through the `MeanFlow` object and the `update!` function
+```julia
+function run(time_max; stats_interval=0.1)
+    while sim_time(sim) < time_max
+        sim_step!(sim, sim_time(sim)+stats_interval)
+        WaterLily.update!(meanflow, sim.flow)
+    end
+end
+
+sim = circle(3*2^6, 2^7; mem=CuArray)
+meanflow = MeanFlow(sim.flow; uu_stats=true)
+time_max, stats_interval = 100, 0.1
+run(time_max; stats_interval)
+```
+The code above creates a `meanflow::MeanFlow` object which is updated every 0.1 time units. The fields `meanflow.U`, `meanflow.P`, and ``meanflow.UU`, contained time-averaged velocity, pressure, and squared velocity. Reynolds stresses can be obtained with
+```julia
+τ = uu(meanflow)
+```
+given that `uu_stats=true` is set when creating the `meanflow`. Check the [TwoD_MeanCircleJLD2.jl](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_MeanCircleJLD2.jl) example for more details.
 
 #### Overwriting default functions
 
