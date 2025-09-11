@@ -25,15 +25,16 @@ Below we provide a list of all the examples available
 - [2D flow around a circle (also demo how to log pressure solver)](examples/TwoD_Circle.jl)
 - [2D flow around a circle with periodic boundary conditions](examples/TwoD_CirclePeriodicBC.jl)
 - [2D flow around a circle in 1DOF vortex-induced-vibration](examples/TwoD_CircleVIV.jl)
+- [2D flow around a circle with JLD2 restart and mean flow calculation](examples/TwoD_MeanCircleJLD2.jl)
 - [2D flow around a flapping plate](examples/TwoD_Hover.jl)
 - [2D flow around the Julia logo](examples/TwoD_Julia.jl)
-- [2D Lid-driven cavity flow (show how to overwrite BC! function)](examples/TwoD_LidCavity.jl)
+- [2D lid-driven cavity flow (show how to overwrite BC! function)](examples/TwoD_LidCavity.jl)
 - [2D flow around a square using AutoBodies set operations](examples/TwoD_Square.jl)
 - [2D flow around multiple cylinders using the AutoBodies](examples/TwoD_MultipleBodies.jl)
 - [2D flow around a foil and a moving cylinder using ParametricBodies](examples/TwoD_MultipleAbstractBodies.jl)
 - [2D flow around a circle with oscillating body force](examples/TwoD_OscillatingFlowOverCircle.jl)
 - [2D flow around circle in an accelerating frame of reference using time-dependent boundary conditions](examples/TwoD_SlowStartCircle.jl)
-- [2D Tandem airfoil motion optimisation using AutoDiff](examples/TwoD_TandemFoilOptim.jl)
+- [2D tandem airfoil motion optimisation using AutoDiff](examples/TwoD_TandemFoilOptim.jl)
 - [2D flow around a triangle with a custom sdf](examples/TwoD_Triangle.jl)
 - [2D flow around a circle fully in the terminal](examples/TwoD_UnicodePlots.jl)
 - [2D channel flow with periodic BCs](examples/TwoD_Channel.jl)
@@ -42,11 +43,12 @@ Below we provide a list of all the examples available
 - [3D donut flow, using the GPU and Makie for live rendering](examples/ThreeD_Donut.jl)
 - [3D jellyfish, using the GPU and Makie for live rendering](examples/ThreeD_Jelly.jl)
 - [3D flow around the hover, extruded sdf and complex Write VTK](examples/ThreeD_HoverWriteVTK.jl)
-- [3D cylinder flow with vtk file save ad restart](examples/ThreeD_CylinderVTKRestart.jl)
+- [3D cylinder flow with VTK file save and restart](examples/ThreeD_CylinderVTKRestart.jl)
 
 ### Detailed examples
 
 #### Flow over a circle
+
 We define the size of the simulation domain as `n`$\times$`m` cells. The circle has radius `m/8` and is centered at `(m/2,m/2)`. The flow boundary conditions are `(U,0)`, where we set `U=1`, and the Reynolds number is `Re=U*radius/ν` where `ν` (Greek "nu" U+03BD, not Latin lowercase "v") is the kinematic viscosity of the fluid.
 ```julia
 using WaterLily
@@ -56,7 +58,7 @@ function circle(n,m;Re=250,U=1)
     Simulation((n,m), (U,0), radius; ν=U*radius/Re, body)
 end
 ```
-The second to last line defines the circle geometry using a [signed distance function](https://en.wikipedia.org/wiki/Signed_distance_function#Applications). The `AutoBody` function uses [automatic differentiation](https://github.com/JuliaDiff/) to infer the other geometric parameter automatically. Replace the circle's distance function with any other, and now you have the flow around something else... such as a [donut](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/ThreeD_Donut.jl) or the [Julia logo](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_Julia.jl). Finally, the last line defines the `Simulation` by passing in parameters we've defined.
+The second to last line defines the circle geometry using a [signed distance function](https://en.wikipedia.org/wiki/Signed_distance_function#Applications). The `AutoBody` function uses [automatic differentiation](https://github.com/JuliaDiff/) to infer the other geometric parameter automatically. Replace the circle's distance function with any other, and now you have the flow around something else... such as a [donut](examples/ThreeD_Donut.jl) or the [Julia logo](examples/TwoD_Julia.jl). Finally, the last line defines the `Simulation` by passing in parameters we've defined.
 
 Now we can create a simulation (first line) and run it forward in time (third line)
 ```julia
@@ -72,7 +74,8 @@ contour(circ.flow.p')
 A set of [flow metric functions](https://github.com/WaterLily-jl/WaterLily.jl/blob/master/src/Metrics.jl) have been implemented and the examples use these to make gifs such as the one above.
 
 #### 3D Taylor Green Vortex
-The three-dimensional [Taylor Green Vortex](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/ThreeD_TaylorGreenVortex.jl) demonstrates many of the other available simulation options. First, you can simulate a non-trivial initial velocity field by passing in a vector function `uλ(i,xyz)` where `i ∈ (1,2,3)` indicates the velocity component `uᵢ` and `xyz=[x,y,z]` is the position vector.
+
+The three-dimensional [Taylor Green Vortex](examples/ThreeD_TaylorGreenVortex.jl) demonstrates many of the other available simulation options. First, you can simulate a non-trivial initial velocity field by passing in a vector function `uλ(i,xyz)` where `i ∈ (1,2,3)` indicates the velocity component `uᵢ` and `xyz=[x,y,z]` is the position vector.
 ```julia
 function TGV(L; Re=1600, U=1, T=Float32, mem=Array)
     # wavenumber, velocity
@@ -118,7 +121,7 @@ function hover(L=2^6;Re=250,U=1,amp=π/4,ϵ=0.5,thk=2ϵ+√2,mem=Array)
     Simulation((6L,6L),(0,0),L;U,ν=U*L/Re,body=AutoBody(sdf,map),ϵ,mem)
 end
 ```
-[In this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_Hover.jl), the `sdf` function defines a line segment from `-L/2 ≤ x[2] ≤ L/2` with a thickness `thk`. To make the line segment move, we define a coordinate transformation function `map(x,t)`. In this example, the coordinate `x` is shifted by `(3L,4L)` at time `t=0`, which moves the center of the segment to this point. However, the horizontal shift varies harmonically in time, sweeping the segment left and right during the simulation. The example also rotates the segment using the rotation matrix `R = [cos(α) sin(α); -sin(α) cos(α)]` where the angle `α` is also varied harmonically. The combined result is a thin flapping line, similar to a cross-section of a hovering insect wing.
+[In this example](examples/TwoD_Hover.jl), the `sdf` function defines a line segment from `-L/2 ≤ x[2] ≤ L/2` with a thickness `thk`. To make the line segment move, we define a coordinate transformation function `map(x,t)`. In this example, the coordinate `x` is shifted by `(3L,4L)` at time `t=0`, which moves the center of the segment to this point. However, the horizontal shift varies harmonically in time, sweeping the segment left and right during the simulation. The example also rotates the segment using the rotation matrix `R = [cos(α) sin(α); -sin(α) cos(α)]` where the angle `α` is also varied harmonically. The combined result is a thin flapping line, similar to a cross-section of a hovering insect wing.
 
 One important thing to note here is the use of `StaticArrays` to define the `sdf` and `map`. This speeds up the simulation since it eliminates allocations at every grid cell and time step.
 
@@ -126,7 +129,7 @@ One important thing to note here is the use of `StaticArrays` to define the `sdf
 
 ![Oscillating flow](assets/oscillating.gif)
 
-This [example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_OscillatingFlowOverCircle.jl) demonstrates a 2D oscillating periodic flow over a circle.
+This [example](examples/TwoD_OscillatingFlowOverCircle.jl) demonstrates a 2D oscillating periodic flow over a circle.
 ```julia
 function circle(n,m;κ=1.5,Re=250,U=1,T=Float32,mem=Array)
     # define a circle at the domain center
@@ -147,7 +150,7 @@ The `perdir` argument is a tuple that specifies the directions to which periodic
 
 ![Accelerating flow](assets/accelerating.gif)
 
-WaterLily gives the possibility to set up a `Simulation` using time-varying boundary conditions for the velocity field, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_SlowStartCircle.jl). This can be used to simulate a flow in an accelerating reference frame. The following example demonstrates how to set up a `Simulation` with a time-varying velocity field.
+WaterLily gives the possibility to set up a `Simulation` using time-varying boundary conditions for the velocity field, as demonstrated in [this example](examples/TwoD_SlowStartCircle.jl). This can be used to simulate a flow in an accelerating reference frame. The following example demonstrates how to set up a `Simulation` with a time-varying velocity field.
 ```julia
 using WaterLily
 # define time-varying velocity boundary conditions
@@ -157,12 +160,11 @@ sim = Simulation((256,256), Ut, 32)
 ```
 The `Ut` function is used to define the time-varying velocity field. In this example, the velocity in the "x" direction is set to `a0*t` where `a0` is the acceleration of the reference frame. The `Simulation` function is then called with the `Ut` function as the second argument. The simulation will then run with the time-varying velocity field.
 
-
 #### Periodic and convective boundary conditions
 
 ![periodic flow](assets/periodic.gif)
 
-In addition to the standard free-slip (or reflective) boundary conditions, WaterLily also supports periodic boundary conditions, as demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_CirclePeriodicBC.jl). For instance, to set up a `Simulation` with periodic boundary conditions in the "y" direction the `perdir=(2,)` keyword argument should be passed
+In addition to the standard free-slip (or reflective) boundary conditions, WaterLily also supports periodic boundary conditions, as demonstrated in [this example](examples/TwoD_CirclePeriodicBC.jl). For instance, to set up a `Simulation` with periodic boundary conditions in the "y" direction the `perdir=(2,)` keyword argument should be passed
 ```julia
 using WaterLily,StaticArrays
 
@@ -197,7 +199,7 @@ Simulation((512,384), u_BC=(1,0), L=32; body, exitBC=true)
 
 ![Multiple bodies](assets/MultipleBodies.gif)
 
-You can also use [Set algebra operations](https://en.wikipedia.org/wiki/Algebra_of_sets#Fundamental_properties_of_set_algebra) to combine `AbstractBody`s together. For example, we can build a square as the intersection of four planes as in [this square example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/main/examples/TwoD_Square.jl)
+You can also use [Set algebra operations](https://en.wikipedia.org/wiki/Algebra_of_sets#Fundamental_properties_of_set_algebra) to combine `AbstractBody`s together. For example, we can build a square as the intersection of four planes as in [this square example](examples/TwoD_Square.jl)
 
 ```julia
 # plane sdf
@@ -211,7 +213,7 @@ body = AutoBody((x,t)->plane(x,t,SA[-L/2,0],SA[-1, 0])) ∩
        AutoBody((x,t)->plane(x,t,SA[L/2, 0],SA[ 1, 0])) ∩
        AutoBody((x,t)->plane(x,t,SA[0,-L/2],SA[ 0,-1]))
 ```
-where `∩` (`\cap<tab>`) is the [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)) operation. We can also take the [union](https://en.wikipedia.org/wiki/Union_(set_theory)) of shapes using `∪` (`\cup<tab>`) or `+`. Since `sum(iter)` is simply iterated addition, we can use this to easily combine a number of bodies together, as demonstrated in [this multiple circles example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/main/examples/TwoD_MultipleBodies.jl)
+where `∩` (`\cap<tab>`) is the [intersection](https://en.wikipedia.org/wiki/Intersection_(set_theory)) operation. We can also take the [union](https://en.wikipedia.org/wiki/Union_(set_theory)) of shapes using `∪` (`\cup<tab>`) or `+`. Since `sum(iter)` is simply iterated addition, we can use this to easily combine a number of bodies together, as demonstrated in [this multiple circles example](examples/TwoD_MultipleBodies.jl)
 ```julia
 body = sum(1:6) do _
     center,radius = 10rand(2) .- 5, (3rand() + 3)/4
@@ -235,7 +237,7 @@ function circle_and_foil(L=2^6;Re=550,U=1,mem=CUDA.CuArray,T=Float32)
     Simulation((10L,4L), (U,0), L; ν=U*L/Re, body=foil+circle, mem, T)
 end
 ```
-[This foil and circle example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/main/examples/TwoD_MultiplesAbstractBodies.jl) defines a foil section as the set [difference](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement) `-` of the upper and lower surfaces (both defined by B-Spline curves) and adds a circle moving with the flow velocity just below it.
+[This foil and circle example](examples/TwoD_MultiplesAbstractBodies.jl) defines a foil section as the set [difference](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement) `-` of the upper and lower surfaces (both defined by B-Spline curves) and adds a circle moving with the flow velocity just below it.
 
 ![Multiple AbstractBody](assets/MultipleAbstractBodies.gif)
 
@@ -243,7 +245,7 @@ end
 
 #### Writing to a VTK file
 
-The following [example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/ThreeD_CylinderVTKRestart.jl) demonstrates how to write simulation data to a `.pvd` file using the `WriteVTK` package and the WaterLily `vtkwriter` function. The simplest writer can be instantiated with
+The following [example](examples/ThreeD_CylinderVTKRestart.jl) demonstrates how to write simulation data to a `.pvd` file using the `WriteVTK` package and the WaterLily `vtkwriter` function. The simplest writer can be instantiated with
 
 ```julia
 using WaterLily,WriteVTK
@@ -301,7 +303,7 @@ For tensor fields, you will need to permute the dimensions __once__ yourself ($T
 
 #### Restarting from a VTK file
 
-The restart of a simulation from a VTK file is demonstrated in [this example](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/ThreeD_CylinderVTKRestart.jl). The `ReadVTK` package is used to read simulation data from a `.pvd` file. This `.pvd` __must__ have been written with the `vtkwriter` function and __must__ contain at least the `velocity` and `pressure` fields. The following example demonstrates how to restart a simulation from a `.pvd` file using the `ReadVTK` package and the WaterLily `vtkreader` function
+The restart of a simulation from a VTK file is demonstrated in [this example](examples/ThreeD_CylinderVTKRestart.jl). The `ReadVTK` package is used to read simulation data from a `.pvd` file. This `.pvd` __must__ have been written with the `vtkwriter` function and __must__ contain at least the `velocity` and `pressure` fields. The following example demonstrates how to restart a simulation from a `.pvd` file using the `ReadVTK` package and the WaterLily `vtkreader` function
 ```julia
 using WaterLily,ReadVTK
 sim = make_sim(...)
@@ -334,7 +336,7 @@ save!("circle.jld2", sim)
 sim2 = circle(3*2^6, 2^7; mem=CuArray)
 load!(sim2; fname="circle.jld2")
 ```
-will save the `circle` simulation in the `circle.jld2` file, which can then be restored with the `load!` function. Now `sim` and `sim2` will contain the same body and flow fields. Check the [TwoD_MeanCircleJLD2.jl](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_MeanCircleJLD2.jl) example for more details.
+will save the `circle` simulation in the `circle.jld2` file, which can then be restored with the `load!` function. Now `sim` and `sim2` will contain the same body and flow fields. Check the [TwoD_MeanCircleJLD2.jl](examples/TwoD_MeanCircleJLD2.jl) example for more details.
 
 #### Computing mean flow metrics
 
@@ -356,7 +358,7 @@ The code above creates a `meanflow::MeanFlow` object which is updated every 0.1 
 ```julia
 τ = uu(meanflow)
 ```
-given that `uu_stats=true` is set when creating the `meanflow`. Check the [TwoD_MeanCircleJLD2.jl](https://github.com/WaterLily-jl/WaterLily-Examples/blob/master/examples/TwoD_MeanCircleJLD2.jl) example for more details.
+given that `uu_stats=true` is set when creating the `meanflow`. Check the [TwoD_MeanCircleJLD2.jl](examples/TwoD_MeanCircleJLD2.jl) example for more details.
 
 #### Overwriting default functions
 
@@ -368,7 +370,8 @@ end
 ```
 in your main script. This means that internally when WaterLily calls `mom_step!`, it will call this new function and not the one in `src/Flow.jl`. This can be used to implement custom boundary conditions, custom body forces, etc.
 
-### ⚙️ Internal working:
+### ⚙️ Internal working
+
 In WaterLily we use a [staggered grid](https://tum-pbs.github.io/PhiFlow/Staggered_Grids.html), this means that the velocity component and the pressure are not at the same physical location in the finite-volume mesh, see figure below. You have to be careful if you play with different fields to make sure that you are performing operations at the correct physical location. This means that some fields might need to be cell-averaged or interpolated to be at the correct location.
 
 ![Staggered grid](assets/WaterLily_grid.svg)
