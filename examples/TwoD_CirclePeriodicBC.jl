@@ -1,7 +1,4 @@
-using WaterLily
-using StaticArrays
-using GLMakie
-using CUDA
+using WaterLily,StaticArrays,GLMakie
 
 function circle(p=4;Re=250,mem=Array,U=1,T=Float32)
     # Define simulation size, geometry dimensions, viscosity
@@ -24,12 +21,13 @@ function circle(p=4;Re=250,mem=Array,U=1,T=Float32)
     Simulation((8L,6L),(U,0),L;ν,body,mem,perdir=(2,),exitBC=true)
 end
 
-sim = circle(5) # use mem=CuArray to run on GPU
+# using CUDA
+sim = circle(5)#;mem=CuArray) to run on GPU
 t₀ = sim_time(sim)
 duration = 40.0
 step = 0.1
 
-viz!(circle(5);duration,step,video="2DCirclePeriodicBC.mp4")
+viz!(sim;duration,step,video="2DCirclePeriodicBC.mp4")
 
 ## Alternative visualization using Plots
 # using Plots

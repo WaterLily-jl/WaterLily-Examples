@@ -1,7 +1,4 @@
-using WaterLily
-using StaticArrays
-using CUDA
-using Plots
+using WaterLily,StaticArrays,CUDA,Plots
 
 function run_TwoD_julia(;p=6,Re=400,stop=100.)
     # Set simulation size & physical parameters
