@@ -354,7 +354,7 @@ meanflow = MeanFlow(sim.flow; uu_stats=true)
 time_max, stats_interval = 100, 0.1
 run(time_max; stats_interval)
 ```
-The code above creates a `meanflow::MeanFlow` object which is updated every 0.1 time units. The fields `meanflow.U`, `meanflow.P`, and ``meanflow.UU`, contained time-averaged velocity, pressure, and squared velocity. Reynolds stresses can be obtained with
+The code above creates a `meanflow::MeanFlow` object which is updated every 0.1 time units. The fields `meanflow.U`, `meanflow.P`, and `meanflow.UU`, contain time-averaged velocity, pressure, and squared velocity. Reynolds stresses can be obtained with
 ```julia
 τ = uu(meanflow)
 ```
