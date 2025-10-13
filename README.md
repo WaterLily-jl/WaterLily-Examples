@@ -237,7 +237,7 @@ function circle_and_foil(L=2^6;Re=550,U=1,mem=CUDA.CuArray,T=Float32)
     Simulation((10L,4L), (U,0), L; ν=U*L/Re, body=foil+circle, mem, T)
 end
 ```
-[This foil and circle example](examples/TwoD_MultiplesAbstractBodies.jl) defines a foil section as the set [difference](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement) `-` of the upper and lower surfaces (both defined by B-Spline curves) and adds a circle moving with the flow velocity just below it.
+[This foil and circle example](examples/TwoD_MultipleAbstractBodies.jl) defines a foil section as the set [difference](https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement) `-` of the upper and lower surfaces (both defined by B-Spline curves) and adds a circle moving with the flow velocity just below it.
 
 ![Multiple AbstractBody](assets/MultipleAbstractBodies.gif)
 
