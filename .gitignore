@@ -3,4 +3,9 @@ Manifest.toml
 .vscode/
 *.log
 *.gif
+*.mp4
+*.pvd
+vtk_data/
+*.png
+*.jld2
 !assets/*
