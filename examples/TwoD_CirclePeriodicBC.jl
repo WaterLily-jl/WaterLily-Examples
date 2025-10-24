@@ -1,11 +1,9 @@
-using WaterLily
-using StaticArrays
-using Plots
+using WaterLily,StaticArrays,GLMakie
 
-function circle(p=4;Re=250,mem=Array,U=1)
+function circle(p=4;Re=250,mem=Array,U=1,T=Float32)
     # Define simulation size, geometry dimensions, viscosity
     L=2^p
-    center,r = SA[3L,3L], L
+    center, r, zeroT = SA{T}[3L,3L], T(L), zero(T)
     ν = U*L/Re
 
     # functions for the body
@@ -14,7 +12,7 @@ function circle(p=4;Re=250,mem=Array,U=1)
         norm2(SA[x[1]-center[1],mod(x[2]-6L,6L)-center[2]])-r
     end
     function map(x,t)
-        x.-SA[0.,U*t/2]
+        x.-SA[zeroT,U*t/2]
     end
     # make a body
     body = AutoBody(sdf,map)
@@ -24,20 +22,22 @@ function circle(p=4;Re=250,mem=Array,U=1)
 end
 
 # using CUDA
-sim = circle(5)#;mem=CuArray); # NOTE: still not working with CUDA
-
-# intialize
+sim = circle(5)#;mem=CuArray) to run on GPU
 t₀ = sim_time(sim)
 duration = 40.0
-tstep = 0.1
+step = 0.1
 
-# step and write
-@time @gif for tᵢ in range(t₀,t₀+duration;step=tstep)
-    # update until time tᵢ in the background
-    sim_step!(sim,tᵢ,remeasure=true)
+viz!(sim;duration,step,video="2DCirclePeriodicBC.mp4")
 
-    # print time step
-    @inside sim.flow.σ[I] = WaterLily.curl(3,I,sim.flow.u)*sim.L/sim.U
-    flood(sim.flow.σ|>Array,clims=(-10,10),shift=(-0.5,-0.5)); body_plot!(sim)
-    println("tU/L=",round(tᵢ,digits=4),", Δt=",round(sim.flow.Δt[end],digits=3))
-end
+## Alternative visualization using Plots
+# using Plots
+# @time @gif for tᵢ in range(t₀,t₀+duration;step)
+#     # update until time tᵢ in the background
+#     sim_step!(sim,tᵢ,remeasure=true)
+
+#     # print time step
+#     @inside sim.flow.σ[I] = WaterLily.curl(3,I,sim.flow.u)*sim.L/sim.U
+#     flood(sim.flow.σ|>Array,clims=(-10,10),shift=(-0.5,-0.5)); body_plot!(sim)
+#     println("tU/L=",round(tᵢ,digits=4),", Δt=",round(sim.flow.Δt[end],digits=3))
+# end
+
