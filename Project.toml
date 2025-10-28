@@ -1,4 +1,5 @@
 [deps]
+BiotSavartBCs = "ec5a6caf-bdf7-41d0-b8e1-5fafde84e19f"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 EllipsisNotation = "da5c29d0-fa7d-589e-88eb-ea29b0a81949"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -21,3 +22,6 @@ TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 WaterLily = "ed894a53-35f9-47f1-b17f-85db9237eebd"
 WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
+
+[sources]
+BiotSavartBCs = {url = "https://github.com/weymouth/BiotSavartBCs.jl"}
