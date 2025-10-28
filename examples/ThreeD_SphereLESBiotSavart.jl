@@ -133,18 +133,5 @@ S = zeros(T, size(sim.flow.p)..., ndims(sim.flow.p), ndims(sim.flow.p)) |> mem
 viz!(sim;duration=10,remeasure=false,λ,udf,udf_kwargs=(:S=>S,:νₜ=>smagorinsky,:Cs=>Cs,:Δ=>Δ))
 
 # Visualize the meanflow
-sim_meanflow = deepcopy(sim)
-WaterLily.copy!(sim_meanflow.flow,meanflow)
-sim_meanflow.flow.μ₁ .= uu(meanflow)
-function U_viz(a, sim)
-    b = sim.flow.σ
-    @inside b[I] = sim.flow.u[I,1]
-    copyto!(a,b[inside(b)])
-end
-function uu_viz(a, sim)
-    b = sim.flow.σ
-    @inside b[I] = sim.flow.μ₁[I,1,1]
-    copyto!(a,b[inside(b)])
-end
-viz!(sim_meanflow;f=U_viz,d=2,levels=20)
-viz!(sim_meanflow;f=uu_viz,d=2,clims=(0.00552,0.0554),threshhold=1e-5,levels=12) # same contour levels as Rodriguez et al. 2011 https://doi.org/10.1017/jfm.2011.136
+viz!(sim, meanflow.U[:,:,:,1]; d=2, levels=20)
+viz!(sim, uu(meanflow)[:,:,:,1,1]; d=2, clims=(0.00552,0.0554), threshhold=1e-5,levels=12) # same contour levels as Rodriguez et al. 2011 https://doi.org/10.1017/jfm.2011.136
