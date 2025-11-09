@@ -28,12 +28,6 @@ let
         return x - SA[l.x + (t-l.t)*l.vx, 0]
     end
 
-    # motion function uses global var to adjust
-    # posx(t) = p0 + (t-t0)*v0
-
-    # motion definition
-    # map(x,t) = x - SA[posx(t), 0]
-
     # make a body
     circle = AutoBody((x,t)->√sum(abs2, x .- center) - radius, Mapping(p0))
 
@@ -49,11 +43,8 @@ let
         t = sum(sim.flow.Δt[1:end-1])
         while t < tᵢ*sim.L/sim.U
 
-            # measure body
-            measure!(sim,t)
-
-            # update flow
-            mom_step!(sim.flow,sim.pois)
+            # measure body, update flow
+            sim_step!(sim)
 
             # pressure force
             force = -WaterLily.pressure_force(sim)
@@ -64,6 +55,11 @@ let
             p0 += Δt*(v0+Δt*accel/2.)
             v0 += Δt*accel
             a0 = accel
+
+            #update the body
+            sim.body.map.x = p0
+            sim.body.map.t = t
+            sim.body.map.vx = v0
 
             # update time, sets the pos/v0 correctly
             t0 = t; t += Δt
