@@ -1,11 +1,11 @@
 Manifest.toml
-
 .vscode/
+!assets/*
+vtk_data/
+**/data*/
 *.log
 *.gif
 *.mp4
 *.pvd
-vtk_data/
 *.png
 *.jld2
-!assets/*

@@ -44,6 +44,7 @@ Below we provide a list of all the examples available
 - [3D jellyfish, using the GPU and Makie for live rendering](examples/ThreeD_Jelly.jl)
 - [3D flow around the hover, extruded sdf and complex Write VTK](examples/ThreeD_HoverWriteVTK.jl)
 - [3D cylinder flow with VTK file save and restart](examples/ThreeD_CylinderVTKRestart.jl)
+- [3D sphere flow with explicit LES, BiotSavart BCs, and turbulence statistics (mean flow and Reynolds stresses)](examples/ThreeD_SphereLESBiotSavart.jl)
 
 ### Detailed examples
 
@@ -358,7 +359,7 @@ The code above creates a `meanflow::MeanFlow` object which is updated every 0.1 
 ```julia
 τ = uu(meanflow)
 ```
-given that `uu_stats=true` is set when creating the `meanflow`. Check the [TwoD_MeanCircleJLD2.jl](examples/TwoD_MeanCircleJLD2.jl) example for more details.
+given that `uu_stats=true` is set when creating the `meanflow`. Check the [TwoD_MeanCircleJLD2.jl](examples/TwoD_MeanCircleJLD2.jl) and [ThreeD_SphereLESBiotSavart.jl](examples/ThreeD_SphereLESBiotSavart.jl) examples for more details.
 
 #### Overwriting default functions
 
