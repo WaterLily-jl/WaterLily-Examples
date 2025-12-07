@@ -53,7 +53,7 @@ function main(D;Vᵣ=4.f0,Mᵣ=4.6,ξ=0.01,U=1,Re=500,T=Float32,mem=Array)
             OrdinaryDiffEq.step!(fsi, sim.flow.Δt[end], true)
             y0,v0,a0 = fsi.u[1:3]
             # update the body, pass new position and velocity
-            sim.body = update!(sim.body;x₀=SA[2.f0sim.L,2.f0sim.L+y0],V=SA[0.f0,v0])
+            sim.body = setmap(sim.body;x₀=SA[2.f0sim.L,2.f0sim.L+y0],V=SA[0.f0,v0])
             # measure body, update flow
             sim_step!(sim,remeasure=true)
             # store state
