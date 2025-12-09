@@ -14,9 +14,9 @@ function hover(L=2^6;Re=250,U=1,amp=π/4,ϵ=0.5,thk=2ϵ+√3,mem=Array)
     Simulation((6L,6L,L),(0,0,0),L;U,ν=U*L/Re,body=AutoBody(sdf,map),ϵ,perdir=(3,),mem)
 end
 
-using CUDA
+# using CUDA
 # make the sim
-sim = hover(64;mem=CuArray)
+sim = hover(64)#;mem=CuArray)
 
 # we know have to define these functions, for example:
 vtk_velocity(a::AbstractSimulation) = a.flow.u |> Array
@@ -25,7 +25,7 @@ vtk_vorticity(a::AbstractSimulation) = (@inside a.flow.σ[I] = WaterLily.curl(3,
 vtk_body(a::AbstractSimulation) = (measure_sdf!(a.flow.σ, a.body, WaterLily.time(a.flow)); a.flow.σ |> Array)
 function vtk_laplacian(a::AbstractSimulation)
     L = copy(a.flow.μ₁); N = length(size(a.flow.μ₁))
-    WaterLily.@loop L[I,:,:] .= WaterLily.∇²u(I,a.flow.u) over I in WaterLily.inside_u(a.flow.u)
+    WaterLily.@loop L[I,:,:] .= WaterLily.S(I,a.flow.u) over I in WaterLily.inside_u(a.flow.u)
     return permutedims(L,[N,1:N-1...]) |> Array # permute dims once, the writer will do it another time
 end
 
@@ -44,6 +44,6 @@ wr = vtkWriter("ThreeD_hover"; attrib=custom_write_attributes)
 @time for tᵢ in range(0.,10;step=0.1)
     println("tU/L=",round(tᵢ,digits=4))
     sim_step!(sim,tᵢ;remeasure=true)
-    write!(wr, sim)
+    save!(wr, sim)
 end
 close(wr)

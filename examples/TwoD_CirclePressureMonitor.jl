@@ -1,9 +1,8 @@
 using WaterLily
 using StaticArrays
 using Plots
-
 """Circle function"""
-function circle(L=32;m=6,n=4,Re=80,U=1,T=Float32,mem=Array)
+function circle(L=32;m=6,n=4,Re=80,U=1,T=Float32)
     radius, center = L/2, max(n*L/2,L)
     body = AutoBody((x,t)->√sum(abs2, x .- center) - radius)
     Simulation((m*L,n*L), (U,0), radius; ν=U*radius/Re, body, T)
@@ -27,7 +26,7 @@ anim  = @animate for tᵢ in range(t₀,t₀+duration;step=tstep)
 
         # update flow
         mom_step!(sim.flow,sim.pois)
-        
+
         # pressure force
         force = -2WaterLily.pressure_force(sim)[1]
         push!(forces_p,force)
@@ -36,13 +35,13 @@ anim  = @animate for tᵢ in range(t₀,t₀+duration;step=tstep)
         # update time
         t += sim.flow.Δt[end]
     end
-  
+
     # print time step
     println("tU/L=",round(tᵢ,digits=4),",  Δt=",round(sim.flow.Δt[end],digits=3))
     a = sim.flow.σ;
     @inside a[I] = WaterLily.curl(3,I,sim.flow.u)*sim.L/sim.U
     flood(a[inside(a)],clims=(-10,10), legend=false); body_plot!(sim)
-    contour!(sim.flow.p[inside(a)]',levels=range(-1,1,length=10),
+    Plots.contour!(sim.flow.p[inside(a)]',levels=range(-1,1,length=10),
              color=:black,linewidth=0.5,legend=false)
 end
 gif(anim,"cylinder.gif")

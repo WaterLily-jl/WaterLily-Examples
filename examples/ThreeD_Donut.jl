@@ -1,9 +1,8 @@
-using WaterLily
-using StaticArrays
-function donut(p=6;Re=1e3,mem=Array,U=1)
+using WaterLily,StaticArrays,GLMakie
+
+function donut(L;Re=1e3,mem=Array,U=1)
     # Define simulation size, geometry dimensions, viscosity
-    n = 2^p
-    center,R,r = SA[n/2,n/2,n/2], n/4, n/16
+    center,R,r = SA[L/2,L/2,L/2], L/4, L/16
     ν = U*R/Re
 
     # Apply signed distance function for a torus
@@ -13,21 +12,22 @@ function donut(p=6;Re=1e3,mem=Array,U=1)
         norm2(SA[x,norm2(SA[y,z])-R])-r
     end
 
-    # Initialize simulation and return center for flow viz
-    Simulation((2n,n,n),(U,0,0),R;ν,body,mem),center
+    # Initialize simulation
+    Simulation((2L,L,L),(U,0,0),R;ν,body,mem)
 end
 
-# using CUDA
-sim,center = donut()#mem=CUDA.CuArray);
-
-dat = sim.flow.σ[inside(sim.flow.σ)] |> Array;
-function ω_θ!(dat,sim,center=center)
-    dt, a = sim.L/sim.U, sim.flow.σ
+function ω_θ!(arr, sim)
+    dt,a = sim.L/sim.U, sim.flow.σ
+    center = SA{eltype(sim.flow.σ)}[2sim.L,2sim.L,2sim.L]
     @inside a[I] = WaterLily.ω_θ(I,(1,0,0),center,sim.flow.u)*dt
-    copyto!(dat,a[inside(a)]) 
+    copyto!(arr, a[inside(a)])
 end
 
-include("../src/ThreeD_plots.jl")
-@time makie_video!(sim,dat,ω_θ!,name="donut.mp4",duration=10,step=0.25) do obs
-    contour(obs, levels=[-5,5], colormap=:balance)
-end
+# make sim and run
+# using CUDA
+sim = donut(2^5)#;mem=CUDA.CuArray);
+t₀ = sim_time(sim)
+duration = 10.0
+step = 0.25
+
+viz!(sim;f=ω_θ!,duration,step,video="donut.mp4",algorithm=:iso,isovalue=0.5) # remove video="donut.mp4" for co-visualization during runtime
