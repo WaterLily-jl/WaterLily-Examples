@@ -20,7 +20,7 @@ function main(L=64;Re=250,U=1,thick=L/16.f0,T=Float32,mem=Array)
     center,pivot = SA[2.f0L, 2.f0L],SA[L/4.f0,0.f0]
     body = AutoBody(sdf, RigidMap(center,θ;xₚ=pivot))
 
-    #  # ellipse with another body type
+    # # ellipse with another body type
     # center,pivot = SA[2.f0L, 2.f0L],SA[L/2.f0,0.f0]
     # ellipse(θ,t) = 0.5f0L*SA[1.f0+cos(θ),sin(θ)/5.f0] # define parametric curve
     # body = HashedBody(ellipse,(0.f0,2.f0π);map=RigidMap(center,θ;xₚ=pivot),T,mem)
@@ -29,8 +29,8 @@ function main(L=64;Re=250,U=1,thick=L/16.f0,T=Float32,mem=Array)
     # cps = SA[-1.f0 0.f0 1.f0; 0.5f0 0.25f0 0.f0]*L/2.f0
     # weights,knots = SA{T}[1.,1.,1.],SA{T}[0,0,0,1,1,1.]
     # pivot = SA[0.f0,0.f0]
-    # body = DynamicNurbsBody(NurbsCurve(cps,knots,weights);map=RigidMap(center,θ;xₚ=pivot),
-    #                         thk=√2/2+1,boundary=false)
+    # body = DynamicNurbsBody(NurbsCurve(cps,knots,weights); map=RigidMap(center,θ;xₚ=pivot),
+                            # thk=√2/2+1,boundary=false)
 
     # make sim
     sim = Simulation((6L,4L),(U,0),L;ν=U*L/Re,body,T,mem)
@@ -51,7 +51,7 @@ function main(L=64;Re=250,U=1,thick=L/16.f0,T=Float32,mem=Array)
             θ += Δt * (ω + Δt * α / 2.f0)
             ω += Δt * α
             # update the body
-            sim.body = WaterLily.setmap(sim.body; θ=T(θ), ω=T(ω))
+            sim.body = setmap(sim.body; θ=T(θ), ω=T(ω))
             # measure and update flow
             sim_step!(sim;remeasure=true)
         end
@@ -67,5 +67,5 @@ function main(L=64;Re=250,U=1,thick=L/16.f0,T=Float32,mem=Array)
 end
 
 # run the main function
-# using CUDA
+using CUDA
 sim = main(64) #; mem=CuArray);

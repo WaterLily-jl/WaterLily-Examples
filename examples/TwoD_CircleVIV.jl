@@ -71,8 +71,8 @@ function main(D;Vᵣ=4.f0,Mᵣ=4.6,ξ=0.01,U=1,Re=500,T=Float32,mem=Array)
 end
 
 # run
-# using CUDA
-sim,data = main(64) #;mem=CuArray);
+using CUDA
+sim,data = main(64;mem=CuArray);
 
 # postprocess and plot
 using FFTW
