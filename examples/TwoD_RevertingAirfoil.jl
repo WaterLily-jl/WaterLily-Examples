@@ -25,8 +25,7 @@ function main(L=64;Re=250,U=1,T=Float32,pivot=T(L/4),a=T(L/2),mem=Array)
             moment = -WaterLily.pressure_moment(x₀+xₚ, sim.flow, sim.body)[1]
             # update rotation ODE
             α = (moment + Ia * α) / (Is + Ia)
-            θ += Δt * (ω + Δt * α / 2)
-            ω += Δt * α
+            ω += Δt * α; θ += Δt * ω # Verlet
             # update the body
             sim.body = setmap(sim.body; θ=T(θ), ω=T(ω))
             # measure and update flow
@@ -37,7 +36,7 @@ function main(L=64;Re=250,U=1,T=Float32,pivot=T(L/4),a=T(L/2),mem=Array)
         flood(sim.flow.σ|>Array,shift=(-1.5,-1.5),clims=(-5,5),axis=([],false),
               cfill=:seismic,legend=false,border=:none,size=(6sim.L,4sim.L)); body_plot!(sim)
         plot!(title="tU/L $tᵢ, θ=$(round(rad2deg(θ), digits=1))°")
-        println("tU/L=", round(tᵢ, digits=4), ", θ=", round(rad2deg(θ), digits=1), "°, ω=", round(ω, digits=3))
+        println("tU/L=", round(tᵢ, digits=4), ", θ=", round(rad2deg(θ), digits=1), "°, ω=", round(ω*sim.L/sim.U, digits=3))
     end
     return sim
 end
