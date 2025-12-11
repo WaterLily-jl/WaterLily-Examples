@@ -9,3 +9,4 @@ vtk_data/
 *.pvd
 *.png
 *.jld2
+.DS_store
