@@ -1,22 +1,25 @@
 using WaterLily,ParametricBodies,StaticArrays,Plots
 
-function main(L=64;Re=250,U=1,T=Float32,pivot=T(L/4),a=T(L/2),mem=Array)
-    # Define foil as a thickened line segment with an initial angle/rotation-rate
-    x₀,xₚ,θ,ω = SA{T}[2L, 2L],SA{T}[pivot,0],T(0.1),T(0)
-    thk(s) = 1.2f0L*(0.2969f0*√s - 0.126f0*(s) - 0.3516f0*(s)^2 + 0.2843f0*(s)^3 - 0.1036f0*(s)^4)
-    body = ParametricBody(BSplineCurve(SA[-a a;0 0]);map=RigidMap(x₀,θ;xₚ,ω),thk,boundary=false)
+function main(L=64;Re=1000,U=1,T=Float32,pivot=T(-0.16),ratio=T(0.5),mem=Array,tend=25)
+    # Define the ellipse geometry, center, initial angle and rotation-rate
+    a,b,x₀,xₚ,θ,ω = T(L/2),T(ratio*L/2),SA{T}[2L,2L],SA{T}[pivot*L,0],T(0.1),T(0)
+    cps = SA{T}[a a 0 -a -a -a  0  a a
+                0 b b  b  0 -b -b -b 0]
+    weights = SA[1.,√2/2,1.,√2/2,1.,√2/2,1.,√2/2,1.]
+    knots = SA[0,0,0,1/4,1/4,1/2,1/2,3/4,3/4,1,1,1]
+    body = ParametricBody(NurbsCurve(cps,knots,weights);map=RigidMap(x₀,θ;xₚ,ω))
 
     # make sim
     sim = Simulation((6L,4L),(U,0),L;ν=U*L/Re,body,T,mem)
 
     # Set dynamical properties
-    m,ma = T(0.12)*L^2,π*a^2   # mass (density = 1) and added mass
-    Is = m*a^2/3 + m*pivot^2   # solid moment of inertia
-    Ia = ma*a^2/8 + ma*pivot^2 # added moment of inertia
-    α = zero(T)                # initial angular acceleration
+    m,ma = π*a*b,π*a^2                   # mass (density = 1) and added mass
+    Is = π*a^3*b/4+m*T(pivot*L)^2        # solid moment of inertia
+    Ia = π/8*(a^2-b^2)^2+ma*T(pivot*L)^2 # added moment of inertia
+    α = zero(T)                          # initial angular acceleration
 
     # Integrate and plot
-    @time @gif for tᵢ in range(0,20;step=0.1)
+    @time @gif for tᵢ in range(0,tend;step=0.1)
         # update until time tᵢ in the background
         while sim_time(sim) < tᵢ
             # the step we are doing
@@ -43,4 +46,5 @@ end
 
 # run the main function
 # using CUDA
-sim = main(); #mem=CuArray);
+chaotic = main();#mem=CuArray);
+stable_invert = main(Re=250,ratio=0.12,pivot=0.25);#,mem=CuArray);
