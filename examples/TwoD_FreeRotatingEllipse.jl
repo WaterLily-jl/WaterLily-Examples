@@ -1,8 +1,8 @@
 using WaterLily,ParametricBodies,StaticArrays,Plots
 
-function main(L=64;Re=1000,U=1,T=Float32,pivot=T(-0.16),ratio=T(0.5),mem=Array,tend=25)
-    # Define the ellipse geometry, center, initial angle and rotation-rate
-    a,b,x₀,xₚ,θ,ω = T(L/2),T(ratio*L/2),SA{T}[2L,2L],SA{T}[pivot*L,0],T(0.1),T(0)
+function main(L=64;Re=1000,U=1,T=Float32,pivot=T(-0.16),thk=T(0.5),mem=Array,tend=50)
+    # Define the ellipse geometry, initial angle and rotation-rate
+    a,b,x₀,xₚ,θ,ω = T(L/2),T(thk*L/2),SA{T}[2L,2L],SA{T}[pivot*L,0],T(0.1),T(0)
     cps = SA{T}[a a 0 -a -a -a  0  a a
                 0 b b  b  0 -b -b -b 0]
     weights = SA[1.,√2/2,1.,√2/2,1.,√2/2,1.,√2/2,1.]
@@ -47,4 +47,4 @@ end
 # run the main function
 # using CUDA
 chaotic = main();#mem=CuArray);
-stable_invert = main(Re=250,ratio=0.12,pivot=0.25);#,mem=CuArray);
+stable_invert = main(Re=250,thk=0.12,pivot=0.25,tend=15);#,mem=CuArray);

@@ -25,7 +25,7 @@ Below we provide a list of all the examples available
 - [2D flow around a circle (also demo how to log pressure solver)](examples/TwoD_Circle.jl)
 - [2D flow around a circle with periodic boundary conditions](examples/TwoD_CirclePeriodicBC.jl)
 - [2D flow around a circle in 1 DOF vortex-induced-vibration using OrdinaryDiffEq.jl](examples/TwoD_CircleVIV.jl)
-- [2D flow around an airfoil pinned at the trailing edge that rotates (FSI)](examples/TwoD_RevertingAirfoil.jl)
+- [2D flow around an ellipse which is free to rotate around a pivot](examples/TwoD_FreeRotatingEllipse.jl)
 - [2D flow around a circle with JLD2 restart and mean flow calculation](examples/TwoD_MeanCircleJLD2.jl)
 - [2D flow around a flapping plate](examples/TwoD_Hover.jl)
 - [2D flow around the Julia logo](examples/TwoD_Julia.jl)
@@ -343,9 +343,11 @@ will save the `circle` simulation in the `circle.jld2` file, which can then be r
 
 ### Fluid-(rigid) body interaction simulations
 
-Using `RigidMap` objects, WaterLily can simulate fluid-structure interaction (FSI) problems where the body motion is determined by Newton's laws of motion. The `RigidMap` object takes stores the linear and angular position and velocities, which can be updated through the `update!` function. An example of a 2D FSI simulation is provided in [this example](examples/TwoD_RevertingAirfoil.jl), where a NACA0012 airfoil is free to rotate around its trailing edge under the action of the fluid forces and a torsional spring.
+Using `RigidMap` objects, WaterLily can simulate fluid-structure interaction (FSI) problems where the body motion is determined by Newton's laws of motion. The `RigidMap` object takes stores the linear and angular position and velocities, which can be updated through the `update!` function. A 2D FSI simulation is provided in [this example](examples/TwoD_FreeRotatingEllipse.jl), where an elliptical section is free to rotate around a pivot under the action of the fluid forcess. Depending on the Reynolds number, ellipse thickness and pivot location, a wide variety of dynamics can be observed, including chaotic motions.
 
-![FSI airfoil](assets/FSI_airfoil.gif)
+Chaotic oscillations     |  Inversion to stable equilibrium
+:-------------------------:|:-------------------------:
+![](assets/EllipseChaos.gif)  |  ![](assets/EllipseStable.gif)
 
 Computing the new state of the `RigidMap` is done by the user, either through a custom time-integration scheme or by using an ODE solver from the [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl) interface, see the [TwoD_CircleVIV.jl](examples/TwoD_CircleVIV.jl) example for more details.
 
