@@ -3,13 +3,13 @@ using WaterLily,StaticArrays,GLMakie
 function circle(p=4;Re=250,mem=Array,U=1,T=Float32)
     # Define simulation size, geometry dimensions, viscosity
     L=2^p
-    center, r, zeroT = SA{T}[3L,3L], T(L), zero(T)
+    center, r, zeroT = SA{T}[3L,0.5L], T(L), zero(T)
     ν = U*L/Re
 
     # functions for the body
     norm2(x) = √sum(abs2,x)
     function sdf(x,t)
-        norm2(SA[x[1]-center[1],mod(x[2]-6L,6L)-center[2]])-r
+        norm2(SA[x[1]-center[1],mod(x[2]-center[2]+3L,6L)-3L])-r
     end
     function map(x,t)
         x.-SA[zeroT,U*t/2]
