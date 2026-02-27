@@ -2,7 +2,7 @@ using WaterLily,GLMakie
 
 function TGV(L; Re=1600, U=1, T=Float32, mem=Array)
     # wavenumber, velocity
-    κ, U = T(2π/L), T(U)
+    κ, U = T(π/L), T(U)
     # Taylor-Green-Vortex initial velocity field
     function uλ(i,xyz)
         x,y,z = @. xyz*κ                       # scaled coordinates
