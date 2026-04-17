@@ -259,7 +259,7 @@ sim = make_sim(...)
 writer = vtkWriter("simple_writer")
 
 # write the data
-write!(writer,sim)
+save!(writer,sim)
 
 # don't forget to close the file
 close(writer)
@@ -300,8 +300,8 @@ where `...` should be replaced with the code that generates the field you want t
 Since we save the entire data array of a field, the ghost cells (see below) are also saved. This is useful for debugging, but useless for post-processing and can actually pollute the visuals. To get the actual field in `Paraview`, you can use the `ExtractSubset` filter and select the `VOI` (Volume of Interest) to remove the first and the last cell in each direction. ![subset](assets/ExtractSubset.png)
 
 > **_NOTE:_**
-The `WriteVTK.jl` package requires components to come first when writing vector and tensor fields, but they are store with component last in `WaterLily`. For vector field, this permutation of dimensions is done automatically in the `write!` function ($V_{ijkα}→ V_{αijk}$). This is why you can simply pass `sim.flow.u |> Array` to the writer.
-For tensor fields, you will need to permute the dimensions __once__ yourself ($T_{ijkαβ}→ T_{βijkα}$) before writing to the file, the second permutation is done in the `write!` function ($T_{βijkα}→ T_{αβijk}$). This operation can be done simply as `permutedims(TensorField, (4,1,2,3))`.
+The `WriteVTK.jl` package requires components to come first when writing vector and tensor fields, but they are store with component last in `WaterLily`. For vector field, this permutation of dimensions is done automatically in the `save!` function ($V_{ijkα}→ V_{αijk}$). This is why you can simply pass `sim.flow.u |> Array` to the writer.
+For tensor fields, you will need to permute the dimensions __once__ yourself ($T_{ijkαβ}→ T_{βijkα}$) before writing to the file, the second permutation is done in the `save!` function ($T_{βijkα}→ T_{αβijk}$). This operation can be done simply as `permutedims(TensorField, (4,1,2,3))`.
 
 #### Restarting from a VTK file
 
@@ -313,7 +313,7 @@ sim = make_sim(...)
 writer = restart_sim!(sim; fname="file_restart.pvd")
 
 # append sim data to the file used for restart
-write!(writer, sim)
+save!(writer, sim)
 
 # don't forget to close the file
 close(writer)

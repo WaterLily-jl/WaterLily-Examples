@@ -2,6 +2,7 @@ using WaterLily,GLMakie
 
 function TGV(L; Re=1600, U=1, T=Float32, mem=Array)
     # wavenumber, velocity
+    # Domain has length = π to take advantage of symmetry conditions
     κ, U = T(π/L), T(U)
     # Taylor-Green-Vortex initial velocity field
     function uλ(i,xyz)
