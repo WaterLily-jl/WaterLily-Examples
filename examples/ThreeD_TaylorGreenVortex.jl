@@ -27,4 +27,5 @@ t₀ = sim_time(sim)
 duration = 15.0
 step = 0.05
 
-viz!(sim;f=λ₂!,duration,step,algorithm=:absorption,colormap=:Reds)
+# visualize with mirrored symmetry axes
+viz!(sim;f=λ₂!,duration,step,sym=(1,1,1),algorithm=:absorption,colormap=:Reds)
