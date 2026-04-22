@@ -46,6 +46,7 @@ Below we provide a list of all the examples available
 - [3D flow around the hover, extruded sdf and complex Write VTK](examples/ThreeD_HoverWriteVTK.jl)
 - [3D cylinder flow with VTK file save and restart](examples/ThreeD_CylinderVTKRestart.jl)
 - [3D sphere flow with explicit LES, BiotSavart BCs, and turbulence statistics (mean flow and Reynolds stresses)](examples/ThreeD_SphereLESBiotSavart.jl)
+- [3D assymetrical wing based on any airfoil, using CPU/GPU and Makie for rendering](examples/ThreeD_AsymmetricalWing.jl)
 
 ### Detailed examples
 
