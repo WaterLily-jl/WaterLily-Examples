@@ -14,6 +14,7 @@ function TUDflame(;L=2^5,Re=1_000,U=1,mem=Array,T=Float32)
                  [0.7388, 0.4575],[0.7572, 0.5155],[0.7460, 0.5190],[0.6785, 0.4722],
                  [0.6105, 0.4645],[0.5733, 0.5018],[0.5905, 0.5817],[0.6538, 0.6410],
                  [0.7348, 0.6990],[0.8070, 0.7589],[0.8360, 0.8282],[0.8312, 0.8299]]...)
+    # scale and move to center of domain
     points = SMatrix{size(pnts)...,T}(pnts.*2L.+SA[2L,2L])
     # make the body
     body = ParametricBody(BSplineCurve(points;degree=2))
@@ -22,8 +23,8 @@ function TUDflame(;L=2^5,Re=1_000,U=1,mem=Array,T=Float32)
 end
 
 # make a sim
-using CUDA
-sim = TUDflame(;L=2^7,mem=CuArray)
+# using CUDA
+sim = TUDflame(;L=2^7) #,mem=CuArray)
 
 # set -up simulations time and time-step for ploting
 t₀,duration,tstep = round(sim_time(sim)), 50.0, 0.05
@@ -34,18 +35,18 @@ t₀,duration,tstep = round(sim_time(sim)), 50.0, 0.05
     # update until time tᵢ in the background
     sim_step!(sim,tᵢ,remeasure=false)
 
-    # flood plot
+    # flood plot of the masked vorticity
     @inside sim.flow.σ[I] = WaterLily.curl(3,I,sim.flow.u)*sim.L/sim.U
     @inside sim.flow.σ[I] = ifelse(abs(sim.flow.σ[I])<0.001,0.0,sim.flow.σ[I])
     flood(sim.flow.σ,shift=(0,0),clims=(-10,10),
           cfill=:starrynight,legend=false,border=:none,size=(1200,800))
-    # plot!(sim.body.curve;shift=(2,1.5),add_cp=false)
+    # binary array for the body
     @inside sim.flow.σ[I] = ifelse(sdf(sim.body,loc(0,I),0.0)<=0,1.0,NaN)
     a = Array(sim.flow.σ[inside(sim.flow.p)])
     contourf!(axes(a,1).+2,axes(a,2).+1.5,a',color="#00A6D6")
+    # plot curve as line
     c = [sim.body.curve(s,0.0) for s ∈ 0:1/100:1]
     plot!(getindex.(c,1).+2,getindex.(c,2).+1.5,color="#00A6D6",lw=1)
-    # plot!(getindex.(c,1).+2,getindex.(c,2).+1.5,color="#00A6D6",lw=3)
     # print time step
     println("tU/L=",round(tᵢ,digits=4),", Δt=",round(sim.flow.Δt[end],digits=3))
 end
