@@ -19,12 +19,6 @@ function jelly(L=2^5;Re=5e2,mem=Array,U=1,T=Float32)
     Simulation((L,L,4L),(0,0,-U),R;ν,body,mem,T)
 end
 
-function ω!(arr, sim)
-    a = sim.flow.σ
-    WaterLily.@inside a[I] = WaterLily.ω_mag(I,sim.flow.u)
-    copyto!(arr, a[inside(a)]) # copy to CPU
-end
-
 # using CUDA
 # make sim and run
 sim = jelly(2^5)#; mem=CuArray)
@@ -32,4 +26,5 @@ t₀ = sim_time(sim)
 duration = 5.0
 step = 0.1
 
-viz!(sim;f=ω!,duration,step,video="jelly.mp4",algorithm=:mip,colormap=:algae)
+# visualize with mirrored symmetry axes
+viz!(sim;duration,step,sym=(1,1,0),video="jelly.mp4",algorithm=:mip,colormap=:algae)
