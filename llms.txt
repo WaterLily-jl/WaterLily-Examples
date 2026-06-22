@@ -1,10 +1,19 @@
 # WaterLily.jl — Agent Quick Reference
 
-**Canonical examples repo:** https://github.com/WaterLily-jl/WaterLily-Examples  
-**Main solver repo:** https://github.com/WaterLily-jl/WaterLily.jl  
+## WaterLily ecosystem: https://github.com/WaterLily-jl/<repo-name>
+
+- WaterLily.jl (core solver)
+- WaterLilyMeshBodies.jl (STL and triangle meshes)
+- ParametricBodies.jl (NURBS and parametric geometry)
+- BiotSavartBCs.jl (external-flow boundary conditions)
+- LilyPad.jl (semi-Lagrangian solver)
+- CoupledSimulations.jl (multiphysics coupling)
+
+For more details on each repository see: llms-ecosystem.txt
+
+- WaterLily-Examples (canonical examples) 
 **README (setup, full code examples):** README.md  
 **Paper:** Weymouth & Font, *Computer Physics Communications* 2025, doi:10.1016/j.cpc.2025.109748
-
 **Always read the relevant `examples/` file before writing code.** This file is an API index and list of gotchas — not a substitute for the examples.
 
 ---
@@ -18,7 +27,7 @@ Simulation(dims, u_BC, L; ν, body, U=1, T=Float64, mem=Array, uλ=nothing,
 
 | Parameter | Notes |
 |---|---|
-| `dims` | Interior grid size tuple. **Must be powers of 2** for multigrid. Actual arrays are `dims .+ 2` (ghost layer). |
+| `dims` | Interior grid size tuple. Each dimension should be a small multiple of a power of two. Actual arrays are `dims .+ 2` (ghost layer). |
 | `u_BC` | Per-dimension boundary velocity, e.g. `(U,0)`. Or `Ut(i,x,t)` for time-varying. |
 | `L` | Reference length in cells. Set `ν=U*L/Re`. |
 | `ν` | Kinematic viscosity. **Greek nu U+03BD — not Latin v.** Copy from examples. |
@@ -41,7 +50,11 @@ body = AutoBody(sdf, map)      # moving/deforming: map(x,t) applied before sdf
 - **Always use `SA[...]` (StaticArrays) inside `sdf`/`map`** — plain arrays cause massive allocations.
 - Set operations: `A ∩ B` (intersection), `A ∪ B` / `A + B` (union). See `TwoD_Square.jl`.
 - Many bodies: `sum(iter) do ...; AutoBody(...); end`. See `TwoD_MultipleBodies.jl`.
-- Moving body via `map`: See `TwoD_Hover.jl`.
+
+## Coordinates and motion maps
+
+Coordinates are indexed as x[1], x[2], x[3] corresponding to (x,y,z).
+Motion maps are applied before sdf evaluation. See TwoD_Hover.jl for the canonical moving-body implementation.
 
 ---
 
@@ -63,7 +76,7 @@ Standard loop: iterate over absolute times with `range(t₀, t₀+duration; step
 |---|---|
 | `sim.flow.u` | Velocity; shape `(n,m,2)` or `(n,m,p,3)`. **Component-last:** `u[I,i]` is component `i` at `CartesianIndex I`. Face-centred (staggered). |
 | `sim.flow.p` | Pressure. Cell-centred. |
-| `sim.flow.σ` | Scratch scalar. Reuse for derived quantities. |
+| `sim.flow.σ` | Scratch scalar workspace. May be overwritten internally. |
 | `sim.flow.Δt[end]` | Current timestep. |
 | `sim.L`, `sim.U`, `sim.flow.ν` | Reference scales. |
 
@@ -86,7 +99,8 @@ pressure_force(sim)
 viscous_force(sim)
 ```
 
-`total_force` sums over **all** bodies. For per-body forces in a multi-body sim, see `TwoD_MultipleBodies.jl`.
+`total_force` sums over **all** bodies. For per-body forces in a multi-body sim, see `TwoD_MultipleBodies.jl`. 
+Forces and moments are returned in simulation units and should typically be scaled before saving, see Shark.jl & ThreeD_SphereLESBiotSavart.jl for 2D and 3D examples.
 
 ---
 

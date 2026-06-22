@@ -1,0 +1,308 @@
+# WaterLily Ecosystem — Agent Repository Guide
+
+This document helps agents select the correct repository in the WaterLily ecosystem.
+
+For API usage, always consult the examples and README of the selected repository.
+
+---
+
+## WaterLily.jl
+
+Repository:
+https://github.com/WaterLily-jl/WaterLily.jl
+
+Purpose:
+Core immersed-boundary incompressible Navier–Stokes solver.
+
+Use when:
+
+* Simulating fluid flow around immersed bodies.
+* Creating custom sdf/map body definitions.
+* Running CPU or GPU simulations.
+* Computing forces, pressure, vorticity, turbulence statistics, etc.
+
+Examples:
+
+* Use the WaterLily-Examples repository.
+
+---
+
+## WaterLily-Examples
+
+Repository:
+https://github.com/WaterLily-jl/WaterLily-Examples
+
+Purpose:
+Canonical usage examples for the entire WaterLily ecosystem.
+
+Use when:
+
+* Learning API usage.
+* Looking for working simulation setups.
+* Implementing a feature for the first time.
+
+Important:
+Always inspect the closest matching example before generating code.
+
+Key examples:
+
+* Basic flow around bodies.
+* Moving and deforming bodies.
+* GPU simulations.
+* VTK output and restart.
+* FSI coupling.
+* Optimization through automatic differentiation.
+* LES and Biot–Savart boundary conditions.
+
+---
+
+## WaterLilyMeshBodies.jl
+
+Repository:
+https://github.com/WaterLily-jl/WaterLilyMeshBodies.jl
+
+Purpose:
+Import STL and triangle-mesh geometry directly into WaterLily simulations.
+
+Main type:
+
+```julia
+MeshBody
+```
+
+Use when:
+
+* Geometry already exists as an STL or triangle mesh.
+* CAD geometry must be simulated directly.
+* Meshes move or deform over time.
+
+Key features:
+
+* Signed-distance queries from arbitrary triangle meshes.
+* GPU-compatible.
+* Bounding Volume Hierarchy (BVH) acceleration.
+* Static and deforming meshes.
+* Motion interpolation from mesh snapshots.
+
+Important:
+
+* WaterLily uses unit-cell coordinates; meshes usually require scaling and mapping.
+* Closed watertight meshes should use `boundary=true`.
+* Reassign the result of:
+
+```julia
+body = update!(body,...)
+body = interpolate!(body,...)
+```
+
+Related WaterLily examples:
+
+* STL and mesh-body examples in the examples repository.
+
+---
+
+## ParametricBodies.jl
+
+Repository:
+https://github.com/WaterLily-jl/ParametricBodies.jl
+
+Purpose:
+Construct bodies from smooth parametric curves, splines, NURBS, and mappings.
+
+Main types:
+
+```julia
+ParametricBody
+HashedBody
+PlanarBody
+NurbsCurve
+DynamicNurbsBody
+```
+
+Use when:
+
+* Geometry is naturally described parametrically.
+* Creating airfoils, blades, curves, NURBS surfaces, or procedural geometry.
+* Building moving and deforming bodies analytically.
+* Sweeping or revolving 2D profiles into 3D bodies.
+
+Key features:
+
+* Automatic closest-point location.
+* NURBS support.
+* Dynamic control-point motion.
+* Extrusion and revolution mappings.
+* GPU-compatible geometry evaluation.
+
+Important:
+
+* Parametric curves should return `SVector`.
+* Dynamic hashed bodies require periodic `update!`.
+* 3D swept and revolved bodies require `ndims=3`.
+
+Examples:
+
+* `TwoD_Circle.jl`
+* `TwoD_Arc.jl`
+* `TwoD_Ellipse.jl`
+* `TwoD_NURBS.jl`
+* `ThreeD_NURBS.jl`
+* `ThreeD_RotatingBladeSpanperiodic.jl`
+
+Related WaterLily example:
+
+* `TwoD_MultipleAbstractBodies.jl`
+
+---
+
+## BiotSavartBCs.jl
+
+Repository:
+https://github.com/WaterLily-jl/BiotSavartBCs.jl
+
+Purpose:
+External-flow boundary conditions based on the Biot–Savart equation.
+
+Main type:
+
+```julia
+BiotSimulation
+```
+
+Use when:
+
+* Simulating external flows.
+* Reducing computational domain size.
+* Capturing far-field velocity induced by domain vorticity.
+* Running high-Reynolds-number simulations efficiently.
+
+Typical replacement:
+
+```julia
+Simulation(...)
+```
+
+becomes
+
+```julia
+BiotSimulation(...)
+```
+
+All other simulation operations remain unchanged.
+
+Key features:
+
+* Automatically updates domain boundary velocities.
+* Allows compact computational domains.
+* GPU accelerated.
+* Fast multipole / multilevel acceleration.
+* Compatible with immersed-body simulations.
+
+Important:
+
+* Mixed Biot–Savart and periodic boundary conditions are not supported.
+* Individual domain faces can disable Biot–Savart updates using `nonbiotfaces`.
+
+Examples:
+
+* Repository `examples/`
+* WaterLily example:
+
+  * `ThreeD_SphereLESBiotSavart.jl`
+
+Reference:
+Weymouth & Lauber (2024),
+"Using Biot-Savart to shrink Eulerian domains while maintaining or improving external flow accuracy".
+
+---
+
+## LilyPad.jl
+
+Repository:
+https://github.com/WaterLily-jl/LilyPad.jl
+
+Purpose:
+Semi-Lagrangian variant of WaterLily.
+
+Main type:
+
+```julia
+LilyPadSim
+```
+
+Use when:
+
+* Large timesteps are desired.
+* Semi-Lagrangian advection is preferred.
+* Comparing WaterLily and semi-Lagrangian formulations.
+
+Typical replacement:
+
+```julia
+Simulation(...)
+```
+
+becomes
+
+```julia
+LilyPadSim(...)
+```
+
+API compatibility:
+
+* `sim_step!`
+* `sim_time`
+* field access
+* body definitions
+* measurement utilities
+
+remain unchanged.
+
+Key features:
+
+* Semi-Lagrangian predictor-corrector method.
+* Fixed timestep formulation.
+* CPU and GPU support.
+* Drop-in replacement for many WaterLily workflows.
+
+Important:
+
+* Solution details differ from WaterLily.
+* Currently under active development.
+* No explicit viscous damping model yet.
+
+Examples:
+
+* `examples/readme_circle_compare.jl`
+
+---
+
+## CoupledSimulations.jl
+
+Repository:
+https://github.com/WaterLily-jl/CoupledSimulations.jl
+
+Purpose:
+Framework for coupling multiple simulations and physics models.
+
+Use when:
+
+* Multiple solvers exchange information.
+* Building partitioned multiphysics workflows.
+* Coupling WaterLily to external models.
+
+See repository README and examples for supported coupling patterns.
+
+---
+
+## Repository Selection Guide
+
+| Task                                | Repository             |
+| ----------------------------------- | ---------------------- |
+| Standard CFD simulation             | WaterLily.jl           |
+| Learn API usage                     | WaterLily-Examples     |
+| STL or CAD geometry                 | WaterLilyMeshBodies.jl |
+| NURBS, splines, procedural geometry | ParametricBodies.jl    |
+| Compact external-flow domains       | BiotSavartBCs.jl       |
+| Semi-Lagrangian solver              | LilyPad.jl             |
+| Multiphysics or solver coupling     | CoupledSimulations.jl  |
