@@ -1,0 +1,162 @@
+# WaterLily.jl — Agent Quick Reference
+
+**Canonical examples repo:** https://github.com/WaterLily-jl/WaterLily-Examples  
+**Main solver repo:** https://github.com/WaterLily-jl/WaterLily.jl  
+**README (setup, full code examples):** README.md  
+**Paper:** Weymouth & Font, *Computer Physics Communications* 2025, doi:10.1016/j.cpc.2025.109748
+
+**Always read the relevant `examples/` file before writing code.** This file is an API index and list of gotchas — not a substitute for the examples.
+
+---
+
+## Constructor
+
+```julia
+Simulation(dims, u_BC, L; ν, body, U=1, T=Float64, mem=Array, uλ=nothing,
+           g=nothing, perdir=(), exitBC=false, ϵ=1)
+```
+
+| Parameter | Notes |
+|---|---|
+| `dims` | Interior grid size tuple. **Must be powers of 2** for multigrid. Actual arrays are `dims .+ 2` (ghost layer). |
+| `u_BC` | Per-dimension boundary velocity, e.g. `(U,0)`. Or `Ut(i,x,t)` for time-varying. |
+| `L` | Reference length in cells. Set `ν=U*L/Re`. |
+| `ν` | Kinematic viscosity. **Greek nu U+03BD — not Latin v.** Copy from examples. |
+| `T`, `mem` | Float type and array backend. GPU: `T=Float32, mem=CuArray` (NVIDIA) or `mem=ROCArray` (AMD). |
+| `uλ(i, xyz)` | Initial velocity; `i` is component index, `xyz` is position vector. See `ThreeD_TaylorGreenVortex.jl`. |
+| `g(i, x, t)` | Spatially-uniform body force. See `TwoD_OscillatingFlowOverCircle.jl`. |
+| `perdir` | Tuple of periodic directions, e.g. `perdir=(1,2)`. |
+| `exitBC=true` | Convective outlet BC on the x-direction exit face. |
+
+---
+
+## Body definition
+
+```julia
+body = AutoBody(sdf)           # static: sdf(x,t) → signed distance (negative inside)
+body = AutoBody(sdf, map)      # moving/deforming: map(x,t) applied before sdf
+```
+
+- AutoDiff computes normals and surface velocities from `sdf` and `map` automatically.
+- **Always use `SA[...]` (StaticArrays) inside `sdf`/`map`** — plain arrays cause massive allocations.
+- Set operations: `A ∩ B` (intersection), `A ∪ B` / `A + B` (union). See `TwoD_Square.jl`.
+- Many bodies: `sum(iter) do ...; AutoBody(...); end`. See `TwoD_MultipleBodies.jl`.
+- Moving body via `map`: See `TwoD_Hover.jl`.
+
+---
+
+## Stepping and time
+
+```julia
+sim_step!(sim)           # single adaptive time step
+sim_step!(sim, t_end)    # advance TO absolute time t_end (not by t_end)
+sim_time(sim)            # current time in convective units U*t/L
+```
+
+Standard loop: iterate over absolute times with `range(t₀, t₀+duration; step=0.1)`.
+
+---
+
+## Key fields
+
+| Expression | Description |
+|---|---|
+| `sim.flow.u` | Velocity; shape `(n,m,2)` or `(n,m,p,3)`. **Component-last:** `u[I,i]` is component `i` at `CartesianIndex I`. Face-centred (staggered). |
+| `sim.flow.p` | Pressure. Cell-centred. |
+| `sim.flow.σ` | Scratch scalar. Reuse for derived quantities. |
+| `sim.flow.Δt[end]` | Current timestep. |
+| `sim.L`, `sim.U`, `sim.flow.ν` | Reference scales. |
+
+- **Ghost cells:** arrays include one ghost layer on each face. Use `@inside` or `inside(a)` to restrict to physical cells.
+- **GPU:** pipe to CPU before any plot or file write — `sim.flow.u |> Array`.
+- **Staggered grid:** velocity is face-centred; averaging required for cell-centre magnitude. See `TwoD_LidCavity.jl`.
+
+```julia
+@inside sim.flow.σ[I] = WaterLily.curl(3, I, sim.flow.u)   # 2D vorticity
+@inside sim.flow.σ[I] = WaterLily.λ₂(I, sim.flow.u)        # 3D λ₂ criterion
+```
+
+---
+
+## Forces
+
+```julia
+total_force(sim)      # pressure + viscous on all bodies combined
+pressure_force(sim)
+viscous_force(sim)
+```
+
+`total_force` sums over **all** bodies. For per-body forces in a multi-body sim, see `TwoD_MultipleBodies.jl`.
+
+---
+
+## Visualization
+
+- **2D gif:** `sim_gif!(sim; duration, clims, plotbody)` — requires `Plots.jl`.
+- **3D / live:** `viz!(sim; duration, step, ...)` — requires `GLMakie.jl`. `viz!` accepts a scalar-field filler `f(arr, sim)`.
+- See `ThreeD_TaylorGreenVortex.jl` for a full GLMakie example.
+
+---
+
+## Other features (see linked examples for usage)
+
+| Feature | Key function(s) | Example |
+|---|---|---|
+| VTK output | `vtkWriter`, `save!` | `ThreeD_HoverWriteVTK.jl`, `ThreeD_CylinderVTKRestart.jl` |
+| JLD2 restart | `save!`, `load!` | `TwoD_MeanCircleJLD2.jl` |
+| VTK restart | `restart_sim!` | `ThreeD_CylinderVTKRestart.jl` |
+| Mean flow / Reynolds stresses | `MeanFlow`, `WaterLily.update!`, `uu` | `TwoD_MeanCircleJLD2.jl`, `ThreeD_SphereLESBiotSavart.jl` |
+| Pressure solver log | `WaterLily.logger`, `plot_logger` | `TwoD_Circle.jl` |
+| No-slip domain BCs | Override `WaterLily.mom_step!` | `TwoD_LidCavity.jl`, `TwoD_Channel.jl` |
+| FSI (OrdinaryDiffEq) | Couple `sim_step!` with ODE solver | `TwoD_CircleVIV.jl` |
+| AutoDiff optimisation | Differentiable through `sim_step!` | `TwoD_TandemFoilOptim.jl` |
+
+**VTK / ParaView:** arrays include ghost cells — use ExtractSubset → VOI to trim. Tensor fields need `permutedims(T, (4,1,2,3))` before writing.
+
+---
+
+## Common mistakes
+
+- **Wrong `ν` symbol:** `ν` is U+03BD (Greek nu), not Latin `v`. Copy from examples.
+- **Array sizes not powers of 2:** The geometric multigrid requires this. Use `2^n` or multiples.
+- **Plotting GPU arrays directly:** Always do `|> Array` before any CPU-side plot or file write.
+- **Forgetting `StaticArrays` inside sdf/map:** Causes massive allocations. Always `using StaticArrays` and use `SA[...]`.
+- **`total_force` returns combined force:** It sums over all bodies. See `TwoD_MultipleBodies.jl` for per-body force extraction.
+- **Ghost cell indexing:** Use `@inside` or `inside(a)` to restrict to physical cells. Whole-array operations include ghost layers.
+- **`sim_step!(sim, t_end)` is absolute, not relative:** It advances to time `t_end`, not by `t_end`.
+- **CFL is diffusion-limited at low Re:** `CFL` includes a `5ν` diffusive term, so `Δt ∝ 1/(U/Δx + 5ν/Δx²)`. At low Re (high ν) the timestep is set by diffusion, not convection.
+
+## Adding no-slip domain BCs
+
+The default domain BCs are reflection with Neumann conditions for the tangential velocity. There are two examples applying no-slip tangential BCs, `TwoD_LidCavity.jl` and `TwoD_Channel.jl`. Both use a simple helper function to update the tangential ghost velocities and overwrite `WaterLily.mom_step!` to call this function after each flow update.
+
+---
+
+## Example index
+
+| File | What it demonstrates |
+|---|---|
+| `TwoD_Circle.jl` | Minimal 2D external flow, pressure logger |
+| `TwoD_CirclePeriodicBC.jl` | Periodic BCs, moving body with `mod` in sdf |
+| `TwoD_CircleVIV.jl` | FSI with OrdinaryDiffEq.jl, 1-DOF VIV |
+| `TwoD_FreeRotatingEllipse.jl` | RigidMap FSI, free rotation |
+| `TwoD_MeanCircleJLD2.jl` | JLD2 restart, MeanFlow statistics |
+| `TwoD_Hover.jl` | Moving+rotating body via map, manual gif loop |
+| `TwoD_Julia.jl` | Complex SDF (Julia logo) |
+| `TwoD_LidCavity.jl` | Custom BC!, overriding mom_step! |
+| `TwoD_Square.jl` | AutoBody set operations (∩) |
+| `TwoD_MultipleBodies.jl` | Union of many AutoBodies, per-body forces |
+| `TwoD_MultipleAbstractBodies.jl` | ParametricBodies + AutoBody combined |
+| `TwoD_OscillatingFlowOverCircle.jl` | Body force `g`, periodic BCs |
+| `TwoD_SlowStartCircle.jl` | Time-varying `u_BC` function |
+| `TwoD_TandemFoilOptim.jl` | AutoDiff optimisation through sim |
+| `TwoD_Triangle.jl` | Custom analytic SDF |
+| `TwoD_UnicodePlots.jl` | Terminal-only visualisation |
+| `TwoD_Channel.jl` | Channel flow, periodic and body-force in x, no-slip in y |
+| `ThreeD_TaylorGreenVortex.jl` | 3D, `uλ` IC, `T=Float32`, GPU, GLMakie viz |
+| `ThreeD_Donut.jl` | 3D torus SDF, GPU, live Makie |
+| `ThreeD_Jelly.jl` | 3D moving body, GPU |
+| `ThreeD_HoverWriteVTK.jl` | 3D extruded sdf, VTK output |
+| `ThreeD_CylinderVTKRestart.jl` | VTK write + restart |
+| `ThreeD_SphereLESBiotSavart.jl` | LES, BiotSavart BCs, turbulence statistics |
+| `notebooks/Shark.jl` | Pluto notebook: fish SDF + traveling wave map |
