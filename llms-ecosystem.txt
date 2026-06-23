@@ -81,17 +81,17 @@ Main types: BiotSimulation, BiotSavartPoisson
 
 Key features:
 
-* Specalized projection & domain update for the BiotSavartPoisson type
-* Reduced dependance on domain size means tiny O(L) domains can be used
+* Specialized projection & domain update for the BiotSavartPoisson type
+* Reduced dependence on domain size means tiny O(L) domains can be used
 * Fast multipole / multilevel acceleration.
 
 Important:
 
 * Mixed Biot–Savart and periodic boundary conditions are not supported.
 * Individual domain faces can disable Biot–Savart updates using `nonbiotfaces`.
-* Enforcing symmetry conditions on `nonbiotface` requires overwritting `symmetry` function. See README.md, examples/square_sym.jl, and gallery/jelly.jl.
+* Enforcing symmetry conditions on `nonbiotface` requires overwriting `symmetry` function. See README.md, examples/square_sym.jl, and gallery/jelly.jl.
 
-Addition Examples: 
+Additional Examples: 
 
 * MeshBodies.jl/examples/*.jl
 * WaterLily-examples/ThreeD_SphereLESBiotSavart.jl
