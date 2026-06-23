@@ -9,7 +9,7 @@
 - LilyPad.jl (semi-Lagrangian solver)
 - CoupledSimulations.jl (multiphysics coupling)
 
-For more details on each repository see: llms-ecosystem.txt
+For more details on each repository see: AGENTS-ecosystem.md
 
 ## WaterLily script pattern
 
@@ -49,13 +49,14 @@ When multiple features are needed:
 1. Start from the example with the closest primary physics.
 2. Add secondary features from other examples.
 
-Physics -> key example
-Moving body ..................... TwoD_Hover.jl
-Initial condition ............... ThreeD_TaylorGreenVortex.jl
-Multiple bodies ................. TwoD_MultipleAbstractBodies.jl
-No-slip walls ................... TwoD_LidCavity.jl
-Fluid-structure-interaction ..... TwoD_FreeRotatingEllipse.jl
-VTK output / restart ............ SaveVTK.jl
+| Physics | key example
+| - | -
+| Moving body | TwoD_Hover.jl
+| Initial condition | ThreeD_TaylorGreenVortex.jl
+| Multiple bodies | TwoD_MultipleAbstractBodies.jl
+| No-slip walls | TwoD_LidCavity.jl
+| Fluid-structure-interaction | TwoD_FreeRotatingEllipse.jl
+| VTK output / restart | SaveVTK.jl
 
 Complete example index at the bottom of the file.
 
