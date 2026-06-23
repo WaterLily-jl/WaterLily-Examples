@@ -17,9 +17,11 @@ Two example notebooks are available to help you get started with WaterLily, they
 [![Pluto notebook link](assets/Pluto_shark.png)](notebooks/Shark.jl)
 ![shark](assets/shark.gif)
 
-### List examples
+### Prompts for coding agents
 
-Below we provide a list of all the examples available
+We have included a sample [AGENTS.md](AGENTS.md) file to help coding agents get familiar with the WaterLily.jl solver and [AGENTS-ecosystem.md](AGENTS-ecosystem.md) for the wider WaterLily-jl ecosystem of packages. In our (limited) experience, this helps coding agents navigate through the examples efficiently and reduce hallucinations when helping create WaterLily scripts. If you find other prompts which help agents use WaterLily, please let us know by opening an issue or creating a pull request with updates to those files. 
+
+### Complete example list
 
 #### 2D
 - [2D flow around a circle (also demo how to log pressure solver)](examples/TwoD_Circle.jl)
