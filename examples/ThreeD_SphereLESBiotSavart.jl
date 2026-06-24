@@ -10,12 +10,6 @@ arg_value(arg, args) = split(args[iarg(arg, args)], "=")[end]
 metaparse(x) = eval(Meta.parse(x))
 # SGS model
 smagorinsky(I::CartesianIndex{m} where m; S, Cs, Δ) = @views (Cs*Δ)^2*sqrt(2dot(S[I,:,:],S[I,:,:])) # Smagorinsky-Lilly SGS model
-# Convective scheme: energy-conserving `cds` base + a small upwind (`quick`) mixture
-# `cds` alone is non-dissipative and Smagorinsky νₜ∝|S|≈0 in the irrotational freestream, so grid-scale
-# noise is never damped and advects to the sphere as streaks.
-# C_blend>0 adds a strain-independent grid-scale dissipation that removes them. 0 ⇒ pure cds.
-C_blend = 1/10
-cds_blend(u,c,d) = (1-C_blend)*cds(u,c,d) + C_blend*quick(u,c,d)
 # I/O
 function save_sim(sim, meanflow, force, t)
     t_str = @sprintf("%i", sim_time(sim))
@@ -93,7 +87,13 @@ m = 3*2^p
 R = m÷3
 U = 1
 udf = explicit_sgs ? sgs! : nothing
-λ = explicit_sgs ? cds : quick
+# Convective scheme: energy-conserving `cds` base + a small upwind (`quick`) mixture
+# `cds` alone is non-dissipative and Smagorinsky νₜ∝|S|≈0 in the irrotational freestream, so grid-scale
+# noise is never damped and advects to the sphere as streaks.
+# C_blend>0 adds a strain-independent grid-scale dissipation that removes them. 0 ⇒ pure cds.
+const C_blend = T(0.1)
+cds_blend(u,c,d) = (1-C_blend)*cds(u,c,d) + C_blend*quick(u,c,d)
+λ = explicit_sgs ? cds_blend : quick
 Cs = T(0.17) # Smagorinsky constant
 Δ = sqrt(1^2 + 1^2 + 1^2) |> T # Filter width
 
