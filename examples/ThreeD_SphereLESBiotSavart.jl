@@ -10,6 +10,12 @@ arg_value(arg, args) = split(args[iarg(arg, args)], "=")[end]
 metaparse(x) = eval(Meta.parse(x))
 # SGS model
 smagorinsky(I::CartesianIndex{m} where m; S, Cs, Δ) = @views (Cs*Δ)^2*sqrt(2dot(S[I,:,:],S[I,:,:])) # Smagorinsky-Lilly SGS model
+# Convective scheme: energy-conserving `cds` base + a small upwind (`quick`) mixture
+# `cds` alone is non-dissipative and Smagorinsky νₜ∝|S|≈0 in the irrotational freestream, so grid-scale
+# noise is never damped and advects to the sphere as streaks.
+# C_blend>0 adds a strain-independent grid-scale dissipation that removes them. 0 ⇒ pure cds.
+C_blend = 1/10
+cds_blend(u,c,d) = (1-C_blend)*cds(u,c,d) + C_blend*quick(u,c,d)
 # I/O
 function save_sim(sim, meanflow, force, t)
     t_str = @sprintf("%i", sim_time(sim))
@@ -130,7 +136,7 @@ viz!(sim) # 3D
 viz!(sim; d=2) # 2D
 # Run and visualize
 S = zeros(T, size(sim.flow.p)..., ndims(sim.flow.p), ndims(sim.flow.p)) |> mem
-viz!(sim;duration=10,remeasure=false,λ,udf,udf_kwargs=(:S=>S,:νₜ=>smagorinsky,:Cs=>Cs,:Δ=>Δ))
+viz!(sim;duration=10,remeasure=false,λ=cds_blend,udf,udf_kwargs=(:S=>S,:νₜ=>smagorinsky,:Cs=>Cs,:Δ=>Δ))
 
 # Visualize the meanflow
 viz!(sim, meanflow.U[:,:,:,1]; d=2, levels=20)
