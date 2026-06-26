@@ -79,20 +79,20 @@ A set of [flow metric functions](https://github.com/WaterLily-jl/WaterLily.jl/bl
 
 #### 3D Taylor Green Vortex
 
-The three-dimensional [Taylor Green Vortex](examples/ThreeD_TaylorGreenVortex.jl) demonstrates many of the other available simulation options. First, you can simulate a non-trivial initial velocity field by passing in a vector function `uλ(i,xyz)` where `i ∈ (1,2,3)` indicates the velocity component `uᵢ` and `xyz=[x,y,z]` is the position vector.
+The three-dimensional [Taylor Green Vortex](examples/ThreeD_TaylorGreenVortex.jl) demonstrates many of the other available simulation options. First, you can simulate a non-trivial initial velocity field by passing in a vector function `u0(i,xyz)` where `i ∈ (1,2,3)` indicates the velocity component `uᵢ` and `xyz=[x,y,z]` is the position vector.
 ```julia
 function TGV(L; Re=1600, U=1, T=Float32, mem=Array)
     # wavenumber, velocity
     κ, U = T(π/L), T(U)
     # Taylor-Green-Vortex initial velocity field
-    function uλ(i,xyz)
+    function u0(i,xyz)
         x,y,z = @. xyz*κ                       # scaled coordinates
         i==1 && return -U*sin(x)*cos(y)*cos(z) # u_x
         i==2 && return  U*cos(x)*sin(y)*cos(z) # u_y
         return zero(U)                         # u_z
     end
     # Initialize simulation
-    return Simulation((L, L, L), (0, 0, 0), L; U, uλ, ν = U*L/Re, T, mem)
+    return Simulation((L, L, L), (0, 0, 0), L; U, u0, ν = U*L/Re, T, mem)
 end
 ```
 This example also demonstrates the floating point type (`T=Float32`) and array memory type (`mem=Array`) options. For example, to run on an NVIDIA GPU we only need to import the [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) library and initialize the `Simulation` memory on that device.

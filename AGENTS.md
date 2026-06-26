@@ -77,7 +77,7 @@ Recipe: flapping foil near a no-slip wall
 ## Constructor
 
 ```julia
-Simulation(dims, u_BC, L; ν, body, U=1, T=Float64, mem=Array, uλ=nothing,
+Simulation(dims, u_BC, L; ν, body, U=1, T=Float64, mem=Array, u0=nothing,
            g=nothing, perdir=(), exitBC=false, ϵ=1)
 ```
 
@@ -88,7 +88,7 @@ Simulation(dims, u_BC, L; ν, body, U=1, T=Float64, mem=Array, uλ=nothing,
 | `L` | Reference length in cells. Set `ν=U*L/Re`. |
 | `ν` | Kinematic viscosity. **Greek nu U+03BD — not Latin v.** Copy from examples. |
 | `T`, `mem` | Float type and array backend. GPU: `T=Float32, mem=CuArray` (NVIDIA) or `mem=ROCArray` (AMD). |
-| `uλ(i, xyz)` | Initial velocity; `i` is component index, `xyz` is position vector. See `ThreeD_TaylorGreenVortex.jl`. |
+| `u0(i, xyz)` | Initial velocity; `i` is component index, `xyz` is position vector. See `ThreeD_TaylorGreenVortex.jl`. |
 | `g(i, x, t)` | Spatially-uniform body force. See `TwoD_OscillatingFlowOverCircle.jl`. |
 | `perdir` | Tuple of periodic directions, e.g. `perdir=(1,2)`. |
 | `exitBC=true` | Convective outlet BC on the x-direction exit face. |
@@ -223,7 +223,7 @@ The default domain BCs are reflection with Neumann conditions for the tangential
 | `TwoD_Triangle.jl` | Custom analytic SDF |
 | `TwoD_UnicodePlots.jl` | Terminal-only visualisation |
 | `TwoD_Channel.jl` | Channel flow, periodic and body-force in x, no-slip in y |
-| `ThreeD_TaylorGreenVortex.jl` | 3D, `uλ` IC, `T=Float32`, GPU, GLMakie viz |
+| `ThreeD_TaylorGreenVortex.jl` | 3D, `u0` IC, `T=Float32`, GPU, GLMakie viz |
 | `ThreeD_Donut.jl` | 3D torus SDF, GPU, live Makie |
 | `ThreeD_Jelly.jl` | 3D moving body, GPU |
 | `ThreeD_HoverWriteVTK.jl` | 3D extruded sdf, VTK output |
