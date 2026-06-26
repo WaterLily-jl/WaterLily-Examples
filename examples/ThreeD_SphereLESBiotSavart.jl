@@ -22,9 +22,9 @@ function read_forces(fname)
     return obj["force"], obj["t"]
 end
 # Sphere
-function sphere(m; n=5m÷2, R=m÷3, U=1, Re=3700, T=Float32, mem=CuArray)
+function sphere(m; n=5m÷2, R=m÷3, U=1, Re=3700, T=Float32, mem=CuArray, λ=quick)
     body = AutoBody((x,t)->√sum(abs2,x .- m÷2)-R)
-    BiotSimulation((n,m,m), (U,0,0), 2R; ν=U*2R/Re, body, T, mem)
+    BiotSimulation((n,m,m), (U,0,0), 2R; ν=U*2R/Re, body, T, mem, λ)  # convective scheme set at construction (WaterLily #301)
 end
 # Metrics
 recirculation_length(U) = findfirst(axes(U,1)) do i
@@ -32,7 +32,7 @@ recirculation_length(U) = findfirst(axes(U,1)) do i
 end |> i -> (i- m÷2)/2R
 
 function run_sim(p; m=3*2^p, R=m÷3, U=1, Re=3700, mem=CuArray, T=Float32, restart=nothing, restart_stats=nothing, restart_force=nothing)
-    sim = sphere(m; R, U, Re, T, mem)
+    sim = sphere(m; R, U, Re, T, mem, λ)
     S = zeros(T, size(sim.flow.p)..., ndims(sim.flow.p), ndims(sim.flow.p)) |> mem # working array holding a tensor for each cell
     force, t = Vector{T}[] ,T[] # force coefficients, time
 
@@ -40,7 +40,7 @@ function run_sim(p; m=3*2^p, R=m÷3, U=1, Re=3700, mem=CuArray, T=Float32, resta
         load!(sim; fname=restart)
         println("Loaded: $restart")
     end
-    sim_step!(sim, stats_init; remeasure=false, verbose=true, λ, udf, νₜ=smagorinsky, S, Cs, Δ)
+    sim_step!(sim, stats_init; remeasure=false, verbose=true, udf, νₜ=smagorinsky, S, Cs, Δ)
 
     meanflow = MeanFlow(sim.flow; uu_stats=true)
     if !isnothing(restart_stats)
@@ -56,7 +56,7 @@ function run_sim(p; m=3*2^p, R=m÷3, U=1, Re=3700, mem=CuArray, T=Float32, resta
 
     next_save = sim_time(sim) + save_interval
     while sim_time(sim) < time_max
-        sim_step!(sim, sim_time(sim)+stats_interval; remeasure=false, verbose=false, λ, udf, νₜ=smagorinsky, S, Cs, Δ)
+        sim_step!(sim, sim_time(sim)+stats_interval; remeasure=false, verbose=false, udf, νₜ=smagorinsky, S, Cs, Δ)
         sim_info(sim)
 
         WaterLily.update!(meanflow, sim.flow)
@@ -104,7 +104,7 @@ function main(;load_time=nothing)
         return run_sim(p; m, R, U, mem, Re, T, restart, restart_stats, restart_force)
     else
         t_str = @sprintf("%i", load_time)
-        sim = sphere(m; R, U, Re, T, mem)
+        sim = sphere(m; R, U, Re, T, mem, λ)
         fname = "$(fname_save)_t$(t_str).jld2"
         load!(sim; fname)
         println("Loaded: $fname")
@@ -130,7 +130,7 @@ viz!(sim) # 3D
 viz!(sim; d=2) # 2D
 # Run and visualize
 S = zeros(T, size(sim.flow.p)..., ndims(sim.flow.p), ndims(sim.flow.p)) |> mem
-viz!(sim;duration=10,remeasure=false,λ,udf,udf_kwargs=(:S=>S,:νₜ=>smagorinsky,:Cs=>Cs,:Δ=>Δ))
+viz!(sim;duration=10,remeasure=false,udf,udf_kwargs=(:S=>S,:νₜ=>smagorinsky,:Cs=>Cs,:Δ=>Δ))
 
 # Visualize the meanflow
 viz!(sim, meanflow.U[:,:,:,1]; d=2, levels=20)
