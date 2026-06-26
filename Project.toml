@@ -23,5 +23,8 @@ UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 WaterLily = "ed894a53-35f9-47f1-b17f-85db9237eebd"
 WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
+[compat]
+WaterLily = "1.8"
+
 [sources]
-BiotSavartBCs = {url = "https://github.com/weymouth/BiotSavartBCs.jl"}
+BiotSavartBCs = {url = "https://github.com/WaterLily-jl/BiotSavartBCs.jl"}
