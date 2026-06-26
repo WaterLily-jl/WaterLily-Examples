@@ -24,7 +24,7 @@ end
 # Sphere
 function sphere(m; n=5m÷2, R=m÷3, U=1, Re=3700, T=Float32, mem=CuArray, λ=quick)
     body = AutoBody((x,t)->√sum(abs2,x .- m÷2)-R)
-    BiotSimulation((n,m,m), (U,0,0), 2R; ν=U*2R/Re, body, T, mem, λ)  # convective scheme set at construction (WaterLily #301)
+    BiotSimulation((n,m,m), (U,0,0), 2R; ν=U*2R/Re, body, T, mem, λ)
 end
 # Metrics
 recirculation_length(U) = findfirst(axes(U,1)) do i

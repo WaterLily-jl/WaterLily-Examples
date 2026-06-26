@@ -8,7 +8,7 @@ function channel_BC!(u)
 end
 
 import WaterLily: mom_step!,mom_predict!,mom_correct!,mom_project!,scale_u!,CFL,AbstractFlow
-# overwrite mom_step! to inject channel BC after each BC! call (convective scheme is flow.λ, set at construction)
+# overwrite mom_step! to inject channel BC after each BC! call
 @fastmath function mom_step!(a::AbstractFlow,b::AbstractPoisson;udf=nothing,kwargs...)
     a.u⁰ .= a.u; scale_u!(a,0); t₁ = sum(a.Δt); t₀ = t₁-a.Δt[end]
     # predictor u → u'
