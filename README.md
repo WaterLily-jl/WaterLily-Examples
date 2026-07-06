@@ -41,6 +41,7 @@ We have included a sample [AGENTS.md](AGENTS.md) file to help coding agents get 
 - [2D flow around a triangle with a custom sdf](examples/TwoD_Triangle.jl)
 - [2D flow around a circle fully in the terminal](examples/TwoD_UnicodePlots.jl)
 - [2D channel flow with periodic BCs](examples/TwoD_Channel.jl)
+- [2D flow around a circle, with keyboard interactivity and Pathline visualization](examples/TwoD_InteractiveCircle.jl)
 #### 3D
 - [3D Taylor-Green vortex break down](examples/ThreeD_TaylorGreenVortex.jl)
 - [3D donut flow, using the GPU and Makie for live rendering](examples/ThreeD_Donut.jl)
@@ -76,6 +77,8 @@ using Plots
 contour(circ.flow.p')
 ```
 A set of [flow metric functions](https://github.com/WaterLily-jl/WaterLily.jl/blob/master/src/Metrics.jl) have been implemented and the examples use these to make gifs such as the one above.
+
+You can also make this example into an interactive demo with particle pathline visualization from [Pathlines.jl](https://github.com/WaterLily-jl/Pathlines.jl)! See [the interactive demo file](examples/TwoD_InteractiveCircle.jl). Demos like this are great for teaching and outreach.
 
 #### 3D Taylor Green Vortex
 
