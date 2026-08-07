@@ -36,4 +36,4 @@ function umag(arr, sim)
     copyto!(arr ,a)
 end
 
-sim_gif!(sim; f=umag, duration=12, step=0.1, clims=(0,1.5), levels=20,shift=(0,0)) # add: fname="channel.gif" to store the video
+sim_gif!(sim; f=umag, duration=12, step=0.1, clims=(0,1.5), levels=20,shift=(0,0)) # add: video="channel.gif" to store the video
