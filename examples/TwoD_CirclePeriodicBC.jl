@@ -1,4 +1,4 @@
-using WaterLily,StaticArrays,GLMakie
+using WaterLily,StaticArrays
 
 function circle(p=4;Re=250,mem=Array,U=1,T=Float32)
     # Define simulation size, geometry dimensions, viscosity
@@ -27,17 +27,10 @@ t₀ = sim_time(sim)
 duration = 40.0
 step = 0.1
 
+using GLMakie
 viz!(sim;duration,step,video="2DCirclePeriodicBC.mp4")
 
-## Alternative visualization using Plots
+# Alternative visualization using Plots
 # using Plots
-# @time @gif for tᵢ in range(t₀,t₀+duration;step)
-#     # update until time tᵢ in the background
-#     sim_step!(sim,tᵢ,remeasure=true)
-
-#     # print time step
-#     @inside sim.flow.σ[I] = WaterLily.curl(3,I,sim.flow.u)*sim.L/sim.U
-#     flood(sim.flow.σ|>Array,clims=(-10,10),shift=(-0.5,-0.5)); body_plot!(sim)
-#     println("tU/L=",round(tᵢ,digits=4),", Δt=",round(sim.flow.Δt[end],digits=3))
-# end
+# sim_gif!(sim;duration,step,video="2DCirclePeriodicBC.mp4",plotbody=true,remeasure=true)
 
