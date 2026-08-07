@@ -17,18 +17,7 @@ end
 
 function run_oscillating_flow(n=392, stop=20)
     sim = circle(n,n)
-    sim_step!(sim,0.1)
-
-    @time @gif for tᵢ in range(0.,stop;step=0.2)
-        println("tU/L=",round(tᵢ,digits=4))
-        sim_step!(sim,tᵢ)
-        @inside sim.flow.σ[I] = WaterLily.curl(3,I,sim.flow.u)*sim.L/sim.U
-        @inside sim.flow.σ[I] = ifelse(abs(sim.flow.σ[I])<0.001,0.0,sim.flow.σ[I])
-        # It's important to have `|>Array` during GPU simulation as `flood` only accept CPU Array input
-        flood(sim.flow.σ|>Array,shift=(-2,-1.5),clims=(-8,8), axis=([], false),
-              cfill=:seismic,legend=false,border=:none,size=(n,n))
-        body_plot!(sim)
-    end
+    sim_gif!(sim; duration=stop, step=0.1, clims=(-8,8), plotbody=true)
 end
 
 run_oscillating_flow()
