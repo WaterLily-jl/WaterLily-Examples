@@ -1,4 +1,4 @@
-using WaterLily,GLMakie
+using WaterLily,Plots
 
 import WaterLily: size_u,@loop,slice
 # ghost-cell correction: enforce no-slip on bottom wall via interpolation
@@ -32,8 +32,8 @@ sim = channel(L=2^7)#;mem=CuArray)
 
 function umag(arr, sim)
     a = sim.flow.σ
-    @inside a[I] = √WaterLily.ke(I,sim.flow.u)
-    copyto!(arr ,a[inside(a)])
+    @inside a[I] = sqrt(2WaterLily.ke(I,sim.flow.u))
+    copyto!(arr ,a)
 end
 
-viz!(sim; f=umag, duration=12, step=0.1, clims=(0,1), levels=20) # add: video="channel.mp4" to store the video
+sim_gif!(sim; f=umag, duration=12, step=0.1, clims=(0,1.5), levels=20,shift=(0,0)) # add: fname="channel.gif" to store the video
