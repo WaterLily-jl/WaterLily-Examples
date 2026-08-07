@@ -10,5 +10,4 @@ function circle(m,n;a0=0.5,Re=250,U=1,mem=Array)
 end
 # using CUDA
 sim = circle(2*196,196)#;mem=CuArray)
-sim_gif!(sim,duration=20,clims=(-8,8),plotbody=true,axis=([], false),
-         cfill=:seismic,legend=false,border=:none)
+sim_gif!(sim,duration=20,clims=(-8,8),plotbody=true,hidedecorations=true)
