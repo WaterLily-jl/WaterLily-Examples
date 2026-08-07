@@ -16,14 +16,5 @@ end
 
 # using CUDA
 sim = hover()#mem=CuArray)
-sim_step!(sim,π)
 
-@time @gif for tᵢ in range(0,10;step=0.1)
-    println("tU/L=",round(tᵢ,digits=4))
-    sim_step!(sim,tᵢ)
-    @inside sim.flow.σ[I] = WaterLily.curl(3,I,sim.flow.u)*sim.L/sim.U
-    @inside sim.flow.σ[I] = ifelse(abs(sim.flow.σ[I])<0.001,0.0,sim.flow.σ[I])
-    flood(sim.flow.σ|>Array,shift=(-2,-1.5),clims=(-5,5), axis=([], false),
-          cfill=:seismic,legend=false,border=:none,size=(6*sim.L,6*sim.L))
-    body_plot!(sim)
-end
+sim_gif!(sim; duration=10, step=0.1, clims=(-8,8), plotbody=true, remeasure=true)
