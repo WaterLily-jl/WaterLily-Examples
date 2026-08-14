@@ -1,4 +1,4 @@
-using WaterLily,GLMakie
+using WaterLily
 
 function TGV(L; Re=1600, U=1, T=Float32, mem=Array)
     # wavenumber, velocity
@@ -15,12 +15,6 @@ function TGV(L; Re=1600, U=1, T=Float32, mem=Array)
     return Simulation((L, L, L), (0, 0, 0), L; U, u0, ν = U*L/Re, T, mem)
 end
 
-function λ₂!(arr, sim)                          # compute log10(-λ₂)
-    a = sim.flow.σ
-    @inside a[I] = log10(max(1e-6,-WaterLily.λ₂(I,sim.flow.u)*sim.L/sim.U))
-    copyto!(arr ,a[inside(a)])                  # copy to CPU
-end
-
 # Initialize CUDA simulation
 # using CUDA
 sim = TGV(2^6; T=Float32)#, mem=CuArray);
@@ -29,4 +23,20 @@ duration = 15.0
 step = 0.05
 
 # visualize with mirrored symmetry axes
+using GLMakie
+function λ₂!(arr, sim)                          # compute log10(-λ₂)
+    a = sim.flow.σ
+    @inside a[I] = log10(max(1e-6,-WaterLily.λ₂(I,sim.flow.u)*sim.L/sim.U))
+    copyto!(arr ,a[inside(a)])                  # copy to CPU
+end
 viz!(sim;f=λ₂!,duration,step,sym=(1,1,1),algorithm=:absorption,colormap=:Reds)
+
+# visualize a slice with sim_gif!
+# using Plots
+# function λ₂!(arr, sim)                          # compute log10(-λ₂)
+#     a = sim.flow.σ
+#     @inside a[I] = log10(max(1e-6,-WaterLily.λ₂(I,sim.flow.u)*sim.L/sim.U))
+#     copyto!(arr ,a)                  # copy to CPU
+# end
+# NN = size(sim.flow.p)
+# sim_gif!(sim;f=λ₂!,duration,step,colormap=:Reds, CIs=CartesianIndices((2:NN[1]-1, 2:NN[2]-1, NN[3]÷2:NN[3]÷2)),clims=(-6,0))
