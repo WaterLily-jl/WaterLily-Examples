@@ -8,15 +8,15 @@ function channel_BC!(u)
 end
 
 import WaterLily: mom_step!,mom_predict!,mom_correct!,mom_project!,scale_u!,CFL,AbstractFlow
-# overwrite mom_step! to inject channel BC after each BC! call
+# overwrite mom_step! to inject channel BC after each project! call
 @fastmath function mom_step!(a::AbstractFlow,b::AbstractPoisson;udf=nothing,kwargs...)
     a.u⁰ .= a.u; scale_u!(a,0); t₁ = sum(a.Δt); t₀ = t₁-a.Δt[end]
     # predictor u → u'
-    mom_predict!(a,t₀,t₁;udf,kwargs...); channel_BC!(a.u)
+    mom_predict!(a,t₀,t₁;udf,kwargs...)
     mom_project!(a,b,1,t₁); channel_BC!(a.u)
     # corrector u → u¹
-    mom_correct!(a,t₁;udf,kwargs...); channel_BC!(a.u)
-    mom_project!(a,b,0.5,t₁); channel_BC!(a.u)
+    mom_correct!(a,t₁;udf,kwargs...)
+    mom_project!(a,b,2,t₁); channel_BC!(a.u)
     push!(a.Δt,CFL(a))
 end
 
