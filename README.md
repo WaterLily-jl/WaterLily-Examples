@@ -48,6 +48,7 @@ We have included a sample [AGENTS.md](AGENTS.md) file to help coding agents get 
 - [3D flow around the hover, extruded sdf and complex Write VTK](examples/ThreeD_HoverWriteVTK.jl)
 - [3D cylinder flow with VTK file save and restart](examples/ThreeD_CylinderVTKRestart.jl)
 - [3D sphere flow with explicit LES, BiotSavart BCs, and turbulence statistics (mean flow and Reynolds stresses)](examples/ThreeD_SphereLESBiotSavart.jl)
+- [3D spanwise-periodic cylinder in 1 DOF vortex-induced vibration with BiotSavart BCs](examples/ThreeD_CylinderVIVBiotSavart.jl)
 
 ### Detailed examples
 
