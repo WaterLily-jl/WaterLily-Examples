@@ -30,7 +30,7 @@ end
 using CUDA,GLMakie,Meshing # headless: xvfb-run -s '-screen 0 2560x1600x24' julia --project -t auto <this file>
 using GeometryBasics: Cylinder,Tessellation,normal_mesh
 using JLD2 # save!/load! restart files
-D,Re,level = 64,1000,8          # resolved wake on a GPU; level is the |ω|D/U of the isosurface
+D,Re,level = 32,300,8           # resolved wake on a GPU; level is the |ω|D/U of the isosurface
 t_warm,t_video,t_end = 10,50,80 # video from t_warm to t_video, response history from 0 to t_end
 
 # Vorticity isosurface as a depth-sorted mesh, in a free 3D scene looking down the span
