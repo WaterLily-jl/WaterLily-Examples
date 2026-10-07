@@ -179,6 +179,7 @@ Forces and moments are returned in simulation units and should typically be scal
 | Pressure solver log | `WaterLily.logger`, `plot_logger` | `TwoD_Circle.jl` |
 | No-slip domain BCs | Override `WaterLily.mom_step!` | `TwoD_LidCavity.jl`, `TwoD_Channel.jl` |
 | FSI (OrdinaryDiffEq) | Couple `sim_step!` with ODE solver | `TwoD_CircleVIV.jl` |
+| BiotSavart BCs with a periodic span | `BiotSimulation(...; perdir=(3,))` | `ThreeD_CylinderVIVBiotSavart.jl` |
 | AutoDiff optimisation | Differentiable through `sim_step!` | `TwoD_TandemFoilOptim.jl` |
 
 **VTK / ParaView:** arrays include ghost cells — use ExtractSubset → VOI to trim. Tensor fields need `permutedims(T, (4,1,2,3))` before writing.
@@ -229,4 +230,5 @@ The default domain BCs are reflection with Neumann conditions for the tangential
 | `ThreeD_HoverWriteVTK.jl` | 3D extruded sdf, VTK output |
 | `ThreeD_CylinderVTKRestart.jl` | VTK write + restart |
 | `ThreeD_SphereLESBiotSavart.jl` | LES, BiotSavart BCs, turbulence statistics |
+| `ThreeD_CylinderVIVBiotSavart.jl` | 1-DOF VIV via RigidMap, BiotSavart BCs with a periodic span |
 | `notebooks/Shark.jl` | Pluto notebook: fish SDF + traveling wave map |
