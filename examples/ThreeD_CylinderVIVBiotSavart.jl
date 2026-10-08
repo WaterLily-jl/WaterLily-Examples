@@ -59,4 +59,4 @@ for (history,label,color) in zip(histories,("plain","strakes"),(:black,:dodgerbl
     lines!(ax,first.(history),last.(history);label,color)
 end
 axislegend(ax;position=:lt)
-save(file,"viv_response.png")
+save("viv_response.png",fig)
