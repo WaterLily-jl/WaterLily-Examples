@@ -15,11 +15,7 @@ function TGV(L; Re=1600, U=1, T=Float32, mem=Array)
     return Simulation((L, L, L), (0, 0, 0), L; U, u0, ν = U*L/Re, T, mem)
 end
 
-function λ₂!(arr, sim)                          # compute log10(-λ₂)
-    a = sim.flow.σ
-    @inside a[I] = log10(max(1e-6,-WaterLily.λ₂(I,sim.flow.u)*sim.L/sim.U))
-    copyto!(arr ,a[inside(a)])                  # copy to CPU
-end
+λ₂!(a, sim) = @inside a[I] = log10(max(1e-6,-WaterLily.λ₂(I,sim.flow.u)*sim.L/sim.U)) # log10(-λ₂)
 
 # Initialize CUDA simulation
 # using CUDA

@@ -163,7 +163,7 @@ Forces and moments are returned in simulation units and should typically be scal
 ## Visualization
 
 - **2D gif:** `sim_gif!(sim; duration, clims, plotbody)` — requires `Plots.jl`.
-- **3D / live:** `viz!(sim; duration, step, ...)` — requires `GLMakie.jl`. `viz!` accepts a scalar-field filler `f(arr, sim)`.
+- **3D / live:** `viz!(sim; duration, step, ...)` — requires `GLMakie.jl`. `viz!` accepts a scalar-field filler `f(a, sim)`, eg. `f(a, sim) = @inside a[I] = WaterLily.λ₂(I, sim.flow.u)`.
 - See `ThreeD_TaylorGreenVortex.jl` for a full GLMakie example.
 
 ---

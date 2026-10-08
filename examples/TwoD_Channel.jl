@@ -30,10 +30,6 @@ end
 # using CUDA
 sim = channel(L=2^7)#;mem=CuArray)
 
-function umag(arr, sim)
-    a = sim.flow.σ
-    @inside a[I] = √WaterLily.ke(I,sim.flow.u)
-    copyto!(arr ,a[inside(a)])
-end
+umag(a, sim) = @inside a[I] = √WaterLily.ke(I,sim.flow.u)
 
 viz!(sim; f=umag, duration=12, step=0.1, clims=(0,1), levels=20) # add: video="channel.mp4" to store the video

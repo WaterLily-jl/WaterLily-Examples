@@ -16,11 +16,9 @@ function donut(L;Re=1e3,mem=Array,U=1)
     Simulation((2L,L,L),(U,0,0),R;ν,body,mem)
 end
 
-function ω_θ!(arr, sim)
-    dt,a = sim.L/sim.U, sim.flow.σ
-    center = SA{eltype(sim.flow.σ)}[2sim.L,2sim.L,2sim.L]
-    @inside a[I] = WaterLily.ω_θ(I,(1,0,0),center,sim.flow.u)*dt
-    copyto!(arr, a[inside(a)])
+function ω_θ!(a, sim)
+    center = SA{eltype(a)}[2sim.L,2sim.L,2sim.L]
+    @inside a[I] = WaterLily.ω_θ(I,(1,0,0),center,sim.flow.u)*sim.L/sim.U
 end
 
 # make sim and run
