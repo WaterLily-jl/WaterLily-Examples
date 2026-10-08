@@ -43,7 +43,7 @@ function WaterLily.measure!(sim::Simulation,t=sum(sim.flow.Δt))
 end
 
 # Run the simulations with and without strakes on CUDA if available
-D,Re,iso_level,duration = 32,300,8,60
+D,Re,iso_level,duration = 32,300,5,60
 mem = CUDA.functional() ? CuArray : Array
 histories = map((false,true)) do strakes
     sim = viv_cylinder(D;Re,strakes,mem); perturb!(sim;noise=0.05); empty!(history)
