@@ -5,6 +5,7 @@
 - WaterLily.jl (core solver)
 - WaterLilyMeshBodies.jl (STL and triangle meshes)
 - ParametricBodies.jl (NURBS and parametric geometry)
+- WaterLilyNarrowBand.jl (faster remeasuring of moving bodies)
 - BiotSavartBCs.jl (external-flow boundary conditions)
 - LilyPad.jl (semi-Lagrangian solver)
 - CoupledSimulations.jl (multiphysics coupling)
