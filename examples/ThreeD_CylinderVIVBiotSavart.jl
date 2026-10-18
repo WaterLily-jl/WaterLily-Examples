@@ -1,5 +1,5 @@
 # Vortex-induced vibration of a cylinder on a transverse spring, with and without helical strakes.
-using WaterLily,StaticArrays,BiotSavartBCs
+using WaterLily,StaticArrays,BiotSavartBCs,WaterLilyNarrowBand
 using WaterLily: pressure_force
 using CUDA,GLMakie,Meshing
 
@@ -14,8 +14,9 @@ end
 function viv_cylinder(D;Re,strakes=false,U=1,T=Float32,mem=Array)
     cylinder_sdf(x) = hypot(x[1],x[2])-D/2
     sdf(x,t) = (x = x-SA[2D,2D,0]; strakes ? min(cylinder_sdf(x),strakes_sdf(x,D,6D)) : cylinder_sdf(x))
-    body = AutoBody(sdf,RigidMap(SA{T}[0,0,0],SA{T}[0,0,0]))
-    BiotSimulation((6D,4D,6D),(U,0,0),D;body,ν=U*D/Re,perdir=(3,),T,mem)
+    dims = (6D,4D,6D)
+    body = NarrowBand(AutoBody(sdf,RigidMap(SA{T}[0,0,0],SA{T}[0,0,0])),dims;mem)
+    BiotSimulation(dims,(U,0,0),D;body,ν=U*D/Re,perdir=(3,),T,mem)
 end
 
 # Move the cylinder on its transverse spring over one time step:
@@ -24,7 +25,7 @@ end
 span(sim) = size(sim.flow.p,3)-2
 function spring!(sim;mstar=4,Ustar=5,ζ=0)
     D,U,T = sim.L,sim.U,eltype(sim.flow.p)
-    dt,x₀,V = sim.flow.Δt[end],sim.body.map.x₀,sim.body.map.V
+    dt,x₀,V = sim.flow.Δt[end],sim.body.body.map.x₀,sim.body.body.map.V
     mass,ωₙ = mstar*π*D^2/4*span(sim), 2π*U/(Ustar*D)
     stiffness,damping = (1+1/mstar)*mass*ωₙ^2,2mass*ζ*ωₙ
     lift = -pressure_force(sim)[2]
@@ -37,7 +38,7 @@ end
 const history = Tuple{Float64,Float64}[]
 function WaterLily.measure!(sim::Simulation,t=sum(sim.flow.Δt))
     spring!(sim)
-    push!(history,(sim_time(sim),sim.body.map.x₀[2]/sim.L))
+    push!(history,(sim_time(sim),sim.body.body.map.x₀[2]/sim.L))
     measure!(sim.flow,sim.body;t,ϵ=sim.ϵ)
     WaterLily.update!(sim.pois)
 end
