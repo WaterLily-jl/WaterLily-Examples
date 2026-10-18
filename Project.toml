@@ -21,10 +21,12 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 WaterLily = "ed894a53-35f9-47f1-b17f-85db9237eebd"
+WaterLilyNarrowBand = "c192da82-d685-4e30-8b0b-b18c69bedd0a"
 WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [compat]
 WaterLily = "1.9.1"
+WaterLilyNarrowBand = "0.1.1"
 
 [sources]
 BiotSavartBCs = {url = "https://github.com/WaterLily-jl/BiotSavartBCs.jl"}

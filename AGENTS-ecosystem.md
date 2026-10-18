@@ -45,6 +45,29 @@ Important:
 
 * WaterLily uses unit-cell coordinates; meshes usually require scaling and mapping.
 * Closed watertight meshes should use `boundary=true` instead of `boundary=false` default.
+* Moving meshes should be wrapped in a `NarrowBand` (see WaterLilyNarrowBand.jl).
+
+---
+
+## WaterLilyNarrowBand.jl
+
+Repository: https://github.com/WaterLily-jl/WaterLilyNarrowBand.jl
+
+Purpose: Speed up remeasuring moving bodies by only evaluating them in a thin band around the surface.
+
+Main type: NarrowBand
+
+Key features:
+
+* Wraps any AbstractBody: `body = NarrowBand(body, dims; mem)`.
+* Identical BDIM fields and forces; `setmap` and `update!` work through the wrapper.
+* Warm-started flood fill for the sign of closed bodies away from the band.
+
+Important:
+
+* Only pays off when the body is remeasured (`remeasure=true`), mainly in 3D or with expensive bodies.
+* Bodies thinner than the band (plates, shells) should use `interior=false`.
+* Moves larger than ~1.7 cells per step fall back to a full measurement.
 
 ---
 
@@ -140,6 +163,7 @@ See repository README and examples for supported coupling patterns.
 | Learn API usage                     | WaterLily-Examples     |
 | STL or CAD geometry                 | WaterLilyMeshBodies.jl |
 | NURBS, splines, procedural geometry | ParametricBodies.jl    |
+| Faster remeasuring of moving bodies | WaterLilyNarrowBand.jl |
 | Compact external-flow domains       | BiotSavartBCs.jl       |
 | Semi-Lagrangian solver              | LilyPad.jl             |
 | Multiphysics or solver coupling     | CoupledSimulations.jl  |

@@ -1,5 +1,5 @@
 # Vortex-induced vibration of a cylinder on a transverse spring, with and without helical strakes.
-using WaterLily,StaticArrays,BiotSavartBCs
+using WaterLily,StaticArrays,BiotSavartBCs,WaterLilyNarrowBand
 using WaterLily: pressure_force
 using CUDA,GLMakie,Meshing
 
@@ -14,8 +14,9 @@ end
 function viv_cylinder(D;Re,strakes=false,U=1,T=Float32,mem=Array)
     cylinder_sdf(x) = hypot(x[1],x[2])-D/2
     sdf(x,t) = (x = x-SA[2D,2D,0]; strakes ? min(cylinder_sdf(x),strakes_sdf(x,D,6D)) : cylinder_sdf(x))
-    body = AutoBody(sdf,RigidMap(SA{T}[0,0,0],SA{T}[0,0,0]))
-    BiotSimulation((6D,4D,6D),(U,0,0),D;body,ν=U*D/Re,perdir=(3,),T,mem)
+    dims = (6D,4D,6D)
+    body = NarrowBand(AutoBody(sdf,RigidMap(SA{T}[0,0,0],SA{T}[0,0,0])),dims;mem)
+    BiotSimulation(dims,(U,0,0),D;body,ν=U*D/Re,perdir=(3,),T,mem)
 end
 
 # Move the cylinder on its transverse spring over one time step:
