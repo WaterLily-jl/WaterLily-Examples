@@ -25,7 +25,7 @@ end
 span(sim) = size(sim.flow.p,3)-2
 function spring!(sim;mstar=4,Ustar=5,ζ=0)
     D,U,T = sim.L,sim.U,eltype(sim.flow.p)
-    dt,x₀,V = sim.flow.Δt[end],sim.body.body.map.x₀,sim.body.body.map.V
+    dt,x₀,V = sim.flow.Δt[end],sim.body.map.x₀,sim.body.map.V
     mass,ωₙ = mstar*π*D^2/4*span(sim), 2π*U/(Ustar*D)
     stiffness,damping = (1+1/mstar)*mass*ωₙ^2,2mass*ζ*ωₙ
     lift = -pressure_force(sim)[2]
@@ -38,7 +38,7 @@ end
 const history = Tuple{Float64,Float64}[]
 function WaterLily.measure!(sim::Simulation,t=sum(sim.flow.Δt))
     spring!(sim)
-    push!(history,(sim_time(sim),sim.body.body.map.x₀[2]/sim.L))
+    push!(history,(sim_time(sim),sim.body.map.x₀[2]/sim.L))
     measure!(sim.flow,sim.body;t,ϵ=sim.ϵ)
     WaterLily.update!(sim.pois)
 end

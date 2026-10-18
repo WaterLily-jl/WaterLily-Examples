@@ -26,6 +26,7 @@ WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [compat]
 WaterLily = "1.9.1"
+WaterLilyNarrowBand = "0.1.1"
 
 [sources]
 BiotSavartBCs = {url = "https://github.com/WaterLily-jl/BiotSavartBCs.jl"}
