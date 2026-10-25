@@ -25,7 +25,7 @@ WaterLilyNarrowBand = "c192da82-d685-4e30-8b0b-b18c69bedd0a"
 WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [compat]
-WaterLily = "1.9.1"
+WaterLily = "1.10.1"
 WaterLilyNarrowBand = "0.1.1"
 
 [sources]
