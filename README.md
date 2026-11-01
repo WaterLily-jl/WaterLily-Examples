@@ -31,7 +31,7 @@ We have included a sample [AGENTS.md](AGENTS.md) file to help coding agents get 
 - [2D flow around a circle with JLD2 restart and mean flow calculation](examples/TwoD_MeanCircleJLD2.jl)
 - [2D flow around a flapping plate](examples/TwoD_Hover.jl)
 - [2D flow around the Julia logo](examples/TwoD_Julia.jl)
-- [2D lid-driven cavity flow (show how to overwrite BC! function)](examples/TwoD_LidCavity.jl)
+- [2D lid-driven cavity flow with no-slip walls](examples/TwoD_LidCavity.jl)
 - [2D flow around a square using AutoBodies set operations](examples/TwoD_Square.jl)
 - [2D flow around multiple cylinders using the AutoBodies](examples/TwoD_MultipleBodies.jl)
 - [2D flow around a foil and a moving cylinder using ParametricBodies](examples/TwoD_MultipleAbstractBodies.jl)
@@ -40,7 +40,7 @@ We have included a sample [AGENTS.md](AGENTS.md) file to help coding agents get 
 - [2D tandem airfoil motion optimisation using AutoDiff](examples/TwoD_TandemFoilOptim.jl)
 - [2D flow around a triangle with a custom sdf](examples/TwoD_Triangle.jl)
 - [2D flow around a circle fully in the terminal](examples/TwoD_UnicodePlots.jl)
-- [2D channel flow with periodic BCs](examples/TwoD_Channel.jl)
+- [2D channel flow with periodic BCs and a no-slip floor](examples/TwoD_Channel.jl)
 #### 3D
 - [3D Taylor-Green vortex break down](examples/ThreeD_TaylorGreenVortex.jl)
 - [3D donut flow, using the GPU and Makie for live rendering](examples/ThreeD_Donut.jl)
@@ -198,6 +198,14 @@ body = AutoBody(sdf, map)
 
 # y-periodic boundary conditions
 Simulation((512,384), u_BC=(1,0), L=32; body, exitBC=true)
+```
+
+#### No-slip walls
+
+Domain faces are made no-slip with the `walls` keyword, as signed directions: `-i` (`i`) is the lower (upper) face normal to `i`. The wall velocity is `u_BC` on the wall, so a wall at rest needs `u_BC` to be zero there (set the initial flow with `u0`, see [this example](examples/TwoD_Channel.jl)) and a moving lid is a `u_BC` function (see [this example](examples/TwoD_LidCavity.jl)). The force on the walls is `WaterLily.total_force(sim.flow, Walls(sim.flow))`.
+```julia
+# channel with a no-slip floor and ceiling, driven by a body force g
+Simulation((512,128), (0,0), 32; U=1, u0=(1,0), g, perdir=(1,), walls=(-2,2))
 ```
 
 #### Set operations for building and combining bodies
@@ -382,7 +390,7 @@ given that `uu_stats=true` is set when creating the `meanflow`. Check the [TwoD_
 
 #### Overwriting default functions
 
-Sometimes, it might be useful to overwrite the default functions used in the simulation. For example, the `BC!` function can be overwritten to implement a custom boundary condition, see [this example](examples/TwoD_LidCavity.jl). For example, to overwrite the `mom_step!` function, you will need something like this
+Sometimes, it might be useful to overwrite the default functions used in the simulation, such as `BC!` for a custom boundary condition. For example, to overwrite the `mom_step!` function, you will need something like this
 ```julia
 @fastmath function mom_step!(a::Flow{N},b::AbstractPoisson;udf=nothing,kwargs...) where N
     ...do your thing...

@@ -69,7 +69,7 @@ Recipe: flow around multiple mesh-defined bodies
 Recipe: flapping foil near a no-slip wall
 
 - Start from a dynamic body example (like Hover)
-- Read no-slip examples and enforce no-slip BC on a wall
+- Add the wall with the `walls` keyword (see TwoD_Channel.jl)
 - Find relevant ParametricBodies/example to replace body with a foil
 - Specialize mapping for the specific case
 
@@ -178,7 +178,7 @@ Forces and moments are returned in simulation units and should typically be scal
 | VTK restart | `restart_sim!` | `ThreeD_CylinderVTKRestart.jl` |
 | Mean flow / Reynolds stresses | `MeanFlow`, `WaterLily.update!`, `uu` | `TwoD_MeanCircleJLD2.jl`, `ThreeD_SphereLESBiotSavart.jl` |
 | Pressure solver log | `WaterLily.logger`, `plot_logger` | `TwoD_Circle.jl` |
-| No-slip domain BCs | Override `WaterLily.mom_step!` | `TwoD_LidCavity.jl`, `TwoD_Channel.jl` |
+| No-slip domain BCs | `walls` keyword, `Walls(sim.flow)` for wall forces | `TwoD_LidCavity.jl`, `TwoD_Channel.jl` |
 | FSI (OrdinaryDiffEq) | Couple `sim_step!` with ODE solver | `TwoD_CircleVIV.jl` |
 | BiotSavart BCs with a periodic span | `BiotSimulation(...; perdir=(3,))` | `ThreeD_CylinderVIVBiotSavart.jl` |
 | AutoDiff optimisation | Differentiable through `sim_step!` | `TwoD_TandemFoilOptim.jl` |
@@ -200,7 +200,7 @@ Forces and moments are returned in simulation units and should typically be scal
 
 ## Adding no-slip domain BCs
 
-The default domain BCs are reflection with Neumann conditions for the tangential velocity. There are two examples applying no-slip tangential BCs, `TwoD_LidCavity.jl` and `TwoD_Channel.jl`. Both use a simple helper function to update the tangential ghost velocities and overwrite `WaterLily.mom_step!` to call this function after each flow update.
+The default domain BCs are reflection with Neumann conditions for the tangential velocity (free-slip). The `walls` keyword makes faces no-slip, as signed directions: `-i` (`i`) is the lower (upper) face normal to `i`. The wall velocity is `uBC` on the wall, so a wall at rest needs `uBC` zero there with the initial flow set by `u0` (`TwoD_Channel.jl`), and a moving lid is a `uBC` function (`TwoD_LidCavity.jl`). Wall forces: `WaterLily.total_force(sim.flow, Walls(sim.flow))`.
 
 ---
 
@@ -215,7 +215,7 @@ The default domain BCs are reflection with Neumann conditions for the tangential
 | `TwoD_MeanCircleJLD2.jl` | JLD2 restart, MeanFlow statistics |
 | `TwoD_Hover.jl` | Moving+rotating body via map, manual gif loop |
 | `TwoD_Julia.jl` | Complex SDF (Julia logo) |
-| `TwoD_LidCavity.jl` | Custom BC!, overriding mom_step! |
+| `TwoD_LidCavity.jl` | No-slip `walls`, moving lid as a `uBC` function |
 | `TwoD_Square.jl` | AutoBody set operations (∩) |
 | `TwoD_MultipleBodies.jl` | Union of many AutoBodies, per-body forces |
 | `TwoD_MultipleAbstractBodies.jl` | ParametricBodies + AutoBody combined |
@@ -224,7 +224,7 @@ The default domain BCs are reflection with Neumann conditions for the tangential
 | `TwoD_TandemFoilOptim.jl` | AutoDiff optimisation through sim |
 | `TwoD_Triangle.jl` | Custom analytic SDF |
 | `TwoD_UnicodePlots.jl` | Terminal-only visualisation |
-| `TwoD_Channel.jl` | Channel flow, periodic and body-force in x, no-slip in y |
+| `TwoD_Channel.jl` | Channel flow, periodic and body-force in x, no-slip floor via `walls` |
 | `ThreeD_TaylorGreenVortex.jl` | 3D, `u0` IC, `T=Float32`, GPU, GLMakie viz |
 | `ThreeD_Donut.jl` | 3D torus SDF, GPU, live Makie |
 | `ThreeD_Jelly.jl` | 3D moving body, GPU |
