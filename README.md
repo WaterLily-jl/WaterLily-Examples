@@ -41,6 +41,7 @@ We have included a sample [AGENTS.md](AGENTS.md) file to help coding agents get 
 - [2D flow around a triangle with a custom sdf](examples/TwoD_Triangle.jl)
 - [2D flow around a circle fully in the terminal](examples/TwoD_UnicodePlots.jl)
 - [2D channel flow with periodic BCs](examples/TwoD_Channel.jl)
+- [2D flow around a stationary and rotating cylinder](examples/TwoD_RotatingCylinder.jl)
 #### 3D
 - [3D Taylor-Green vortex break down](examples/ThreeD_TaylorGreenVortex.jl)
 - [3D donut flow, using the GPU and Makie for live rendering](examples/ThreeD_Donut.jl)
