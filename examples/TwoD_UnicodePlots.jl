@@ -1,4 +1,4 @@
-using UnicodePlots,SparseArrays
+using UnicodePlots,SparseArrays,WaterLily
 function flood!(canvas,bitarray,color)
     x,y,_ = findnz(sparse(bitarray))
     UnicodePlots.points!(canvas,x,y;color)
@@ -30,7 +30,6 @@ function sim_ascii!(sim;duration=10,step=0.25,remeasure=false,lines=10,body=fals
     print(ansi_enablecursor)
 end
 
-using WaterLily
 function circle(radius=12;Re=250,n=(12,6),U=1)
     center = radius*n[2]/2
     body = AutoBody((x,t)->√sum(abs2, x .- center) - radius)
