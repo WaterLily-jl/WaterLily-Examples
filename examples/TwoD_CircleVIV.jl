@@ -72,7 +72,7 @@ end
 
 # run
 mem = CUDA.functional() ? CuArray : Array
-sim,data = main(64; mem=mem)
+sim,data = main(64; mem=mem);
 
 # postprocess and plot
 using FFTW
