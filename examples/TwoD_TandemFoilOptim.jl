@@ -26,7 +26,8 @@ end
 
 function make_foils(φ;two=true,L=32,Re=1e3,St=0.3,αₘ=-π/18,U=1,n=8,m=4)
     # Map from simulation coordinate x to surface coordinate ξ
-    nose,pivot = SA[2L,m*L//2],SA[L//4,0]
+    R = typeof(value(φ)) # floats: Rationals need 128-bit integers, which PoCL cannot compile
+    nose,pivot = SA{R}[2L,m*L/2],SA{R}[L/4,0]
     θ₀ = αₘ+atan(π*St); h₀=L; ω=π*St*U/h₀
     function map(x,t)
         back = two && x[1]>nose[1]+2L # back body?
