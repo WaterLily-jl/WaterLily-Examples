@@ -214,6 +214,7 @@ The default domain BCs are reflection with Neumann conditions for the tangential
 | `TwoD_FreeRotatingEllipse.jl` | RigidMap FSI, free rotation |
 | `TwoD_MeanCircleJLD2.jl` | JLD2 restart, MeanFlow statistics |
 | `TwoD_Hover.jl` | Moving+rotating body via map, manual gif loop |
+| `TwoD_RotatingCylinder.jl` | RigidMap with constant ω: spinning cylinder / Magnus lift, interactive `viz_step!` loop |
 | `TwoD_Julia.jl` | Complex SDF (Julia logo) |
 | `TwoD_LidCavity.jl` | Custom BC!, overriding mom_step! |
 | `TwoD_Square.jl` | AutoBody set operations (∩) |
