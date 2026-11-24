@@ -77,7 +77,7 @@ Note we've set `n,m` to be multiples of powers of 2, which is important when usi
 using Plots
 contour(circ.flow.p')
 ```
-A set of [flow metric functions](https://github.com/WaterLily-jl/WaterLily.jl/blob/master/src/Metrics.jl) have been implemented and the examples use these to make gifs such as the one above.
+A set of [flow metric functions](https://github.com/WaterLily-jl/WaterLily.jl/blob/main/src/Metrics.jl) have been implemented and the examples use these to make gifs such as the one above.
 
 #### 3D Taylor Green Vortex
 
